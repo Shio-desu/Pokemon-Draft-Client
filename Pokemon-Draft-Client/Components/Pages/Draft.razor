@@ -1,5 +1,7 @@
 ﻿@page "/draft"
+@using Microsoft.AspNetCore.Authorization
 @rendermode InteractiveServer
+@attribute [Authorize(Roles= "Administrator,User")];
 
 <PageTitle>Pokemon Draft</PageTitle>
 

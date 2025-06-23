@@ -1,0 +1,67 @@
+﻿@page "/account/login"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Pokemon
+@inject NavigationManager NavigationManager
+
+<PageTitle>Login</PageTitle>
+
+<div>
+    <div>
+        <EditForm Model="@LoginView" OnValidSubmit="OnSubmitLogin" FormName="LoginForm">
+            <DataAnnotationsValidator/>
+            <div>
+                <img src="/images/avatar.png"  alt="Generic Avatar"/>
+                <h3>Login</h3>
+            </div>
+            <div>
+                <label>Username</label>
+                <InputText @bind-Value="LoginView.Username" placeholder="Username" />
+                <ValidationMessage For="() => LoginView.Username" />
+            </div>
+            <div>
+                <label>Password</label>
+                <InputText @bind-Value="LoginView.Password" placeholder="Password" type="password"/>
+                <ValidationMessage For="() => LoginView.Password" />
+            </div>
+            <div>
+                <span>@errorMessage</span>
+            </div>
+            <div>
+                <button type="submit">Login</button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    public HttpContext? HttpContext { get; set; }
+    
+    [SupplyParameterFromForm]
+    public LoginViewModel LoginView { get; set; } = new();
+
+    private string? errorMessage;
+    
+    protected override Task OnInitializedAsync()
+    {
+        return Task.CompletedTask;
+    }
+    
+    private async Task OnSubmitLogin()
+    {
+        //TODO: Login authentication with a DB or something
+        var claims = new List<Claim>()
+        {
+            new Claim(ClaimTypes.Name, LoginView.Username),
+            new Claim(ClaimTypes.Role, "Administrator")
+        };
+
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var principal = new ClaimsPrincipal(identity);
+        await HttpContext.SignInAsync(principal);
+        NavigationManager.NavigateTo("/");
+        
+    }
+}

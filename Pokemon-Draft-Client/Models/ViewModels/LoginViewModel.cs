@@ -5,8 +5,8 @@ namespace Pokemon;
 public class LoginViewModel
 {
     [Required(AllowEmptyStrings = false, ErrorMessage = "Please enter a Username")]
-    public required string Username { get; set; }
+    public string? Username { get; set; }
     
     [Required(AllowEmptyStrings = false, ErrorMessage = "Please enter a Password")]
-    public required string Password { get; set; }
+    public string? Password { get; set; }
 }

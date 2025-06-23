@@ -7,4 +7,8 @@
         <AssemblyName>$(AssemblyName.Replace(' ', '_'))</AssemblyName>
     </PropertyGroup>
 
+    <ItemGroup>
+      <None Include="wwwroot\images\avatar.png" />
+    </ItemGroup>
+
 </Project>
