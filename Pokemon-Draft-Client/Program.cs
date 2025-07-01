@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using DataAccessLibrary;
+using DataAccessLibrary.Interfaces;
 using Pokemon_Draft_Client.Components;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +34,10 @@ builder.Services.AddSession(options =>
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });*/
+
+// Add Database-Services
+builder.Services.AddTransient<ISqlDataAccess, SqlDataAccess>();
+builder.Services.AddTransient<IUserData, UserData>();
 
 var app = builder.Build();
 

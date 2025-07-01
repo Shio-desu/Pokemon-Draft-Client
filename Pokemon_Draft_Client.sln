@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pokemon-Draft-Client", "Pokemon-Draft-Client\Pokemon-Draft-Client.csproj", "{30AD35DD-DCAC-4E39-8AF8-E3C4C2CA7CDB}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccessLibrary", "DataAccessLibrary\DataAccessLibrary.csproj", "{3A4B1815-D741-4A1E-88DE-128005DBE7FC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{30AD35DD-DCAC-4E39-8AF8-E3C4C2CA7CDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{30AD35DD-DCAC-4E39-8AF8-E3C4C2CA7CDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{30AD35DD-DCAC-4E39-8AF8-E3C4C2CA7CDB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A4B1815-D741-4A1E-88DE-128005DBE7FC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A4B1815-D741-4A1E-88DE-128005DBE7FC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A4B1815-D741-4A1E-88DE-128005DBE7FC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A4B1815-D741-4A1E-88DE-128005DBE7FC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
