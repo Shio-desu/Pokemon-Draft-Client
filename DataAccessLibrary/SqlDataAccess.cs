@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Data;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
 using DataAccessLibrary.Interfaces;
-using DataAccessLibrary.Models;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Console;
 using Npgsql;
 
 namespace DataAccessLibrary
