@@ -6,6 +6,16 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <RootNamespace>Pokemon-Draft-Client</RootNamespace>
         <AssemblyName>$(AssemblyName.Replace(' ', '_'))</AssemblyName>
+        <UserSecretsId>42dddecb-a75b-4421-b32a-136fa23b0abf</UserSecretsId>
     </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\DataAccessLibrary\DataAccessLibrary.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.6" />
+      <PackageReference Include="Npgsql" Version="9.0.3" />
+    </ItemGroup>
 
 </Project>

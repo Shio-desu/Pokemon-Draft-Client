@@ -8,7 +8,11 @@ namespace DataAccessLibrary
     public class UserData : IUserData
     {
         private readonly ISqlDataAccess _db;
-
+        
+        // declaring the names of the columns
+        private readonly string _usernameColumnString = "username";
+        private readonly string _passhashColumnString = "passhash";
+        private readonly string _saltColumnString = "salt";
         public UserData(ISqlDataAccess db)
         {
             _db = db;
@@ -16,14 +20,14 @@ namespace DataAccessLibrary
 
         public Task<List<UserModel>> GetUsers()
         {
-            string sql = "select * from User";
+            string sql = "select * from users";
             return _db.LoadData<UserModel, dynamic>(sql, new { });
         }
 
         public Task PostUser(UserModel user)
         {
-            string sql = @"insert into User (username, passhash, salt) 
-                            values (@Username, @Passhash, @Salt);";
+            string sql = $"insert into users ({_usernameColumnString}, {_passhashColumnString}, {_saltColumnString}) " +
+                         "values (@Username, @Passhash, @Salt);";
             return _db.SaveData(sql, user);
         }
     }
