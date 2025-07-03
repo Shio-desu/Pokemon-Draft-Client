@@ -1,9 +1,11 @@
 ﻿@page "/account/login"
 @using System.Security.Claims
+@using DataAccessLibrary
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Authentication.Cookies
 @using Pokemon
 @inject NavigationManager NavigationManager
+@inject IUserData UserData
 
 <PageTitle>Login</PageTitle>
 
@@ -32,12 +34,15 @@
                 <button type="submit">Login</button>
             </div>
         </EditForm>
+        <div>
+            <a  href="account/register">Create new account</a>
+        </div>
     </div>
 </div>
 
 @code {
     [CascadingParameter]
-    public HttpContext? HttpContext { get; set; }
+    public required HttpContext HttpContext { get; set; }
     
     [SupplyParameterFromForm]
     public LoginViewModel LoginView { get; set; } = new();
@@ -51,10 +56,32 @@
     
     private async Task OnSubmitLogin()
     {
-        //TODO: Login authentication with a DB or something
+        if (LoginView.Username == null)
+        {
+            errorMessage = "Please enter a Username.";
+            return;
+        }
+
+        var allUsers = await UserData.GetUsers();
+        var userAccount = allUsers.FirstOrDefault(user => user.Username == LoginView.Username);
+
+        if (userAccount is null)
+        {
+            errorMessage = "No Account found with this Username.";
+            return;
+        }
+
+        bool verify = BCrypt.Net.BCrypt.Verify(LoginView.Password, userAccount.Passhash);
+
+        if (!verify)
+        {
+            errorMessage = "Invalid Password.";
+            return;
+        }
+        
         var claims = new List<Claim>()
         {
-            new Claim(ClaimTypes.Name, LoginView.Username),
+            new Claim(ClaimTypes.Name, userAccount.Username),
             new Claim(ClaimTypes.Role, "Administrator")
         };
 

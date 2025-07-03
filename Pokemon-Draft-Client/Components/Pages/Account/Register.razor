@@ -1,0 +1,103 @@
+﻿@page "/account/register"
+@using System.Security.Claims
+@using DataAccessLibrary
+@using DataAccessLibrary.Models
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Pokemon
+@inject NavigationManager NavigationManager
+@inject IUserData UserData
+
+<PageTitle>Login</PageTitle>
+
+<div>
+    <div>
+        <EditForm Model="@RegisterView" OnValidSubmit="OnSubmitAccount" FormName="AccountCreationForm">
+            <DataAnnotationsValidator/>
+            <div>
+                <img src="/images/avatar.png"  alt="Generic Avatar"/>
+                <h3>Login</h3>
+            </div>
+            <div>
+                <label>Username</label>
+                <InputText @bind-Value="RegisterView.Username" placeholder="Username" />
+                <ValidationMessage For="() => RegisterView.Username" />
+            </div>
+            <div>
+                <label>Password</label>
+                <InputText @bind-Value="RegisterView.Password" placeholder="Password" type="password"/>
+                <ValidationMessage For="() => RegisterView.Password" />
+            </div>
+            <div>
+                <label>Repeat Password</label>
+                <InputText @bind-Value="RegisterView.RepeatPassword" placeholder="Repeat Password" type="password"/>
+                <ValidationMessage For="() => RegisterView.RepeatPassword" />
+            </div>
+            <div>
+                <span>@errorMessage</span>
+            </div>
+            <div>
+                <button type="submit">Register</button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    public required HttpContext HttpContext { get; set; }
+    
+    [SupplyParameterFromForm]
+    public RegisterViewModel RegisterView { get; set; } = new();
+
+    private string? errorMessage;
+    
+    protected override Task OnInitializedAsync()
+    {
+        return Task.CompletedTask;
+    }
+    
+    private async Task OnSubmitAccount()
+    {
+        //TODO: Login authentication with a DB or something
+        if (RegisterView.Username == null)
+        {
+            errorMessage = "Please input a Username.";
+            return;
+        }
+
+        if (RegisterView.Password == null)
+        {
+            errorMessage = "Please input a Password.";
+            return;
+        }
+        
+        if (RegisterView.Password != RegisterView.RepeatPassword)
+        {
+            errorMessage = "Passwords do not match.";
+            return;
+        }
+        
+        List<UserModel> users = await UserData.GetUsers();
+        if (users.Exists(user => user.Username == RegisterView.Username))
+        {
+            errorMessage = "Username already exists.";
+            return;
+        }
+
+        string salt = BCrypt.Net.BCrypt.GenerateSalt();
+        string passhash = BCrypt.Net.BCrypt.HashPassword(RegisterView.RepeatPassword, salt);
+        
+        UserModel newUser = new UserModel
+        {
+            Username = RegisterView.Username,
+            Passhash = passhash,
+            Salt = salt
+        };
+
+        await UserData.PostUser(newUser);
+        
+        NavigationManager.NavigateTo("/account/login");
+        
+    }
+}
