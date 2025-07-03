@@ -1,0 +1,94 @@
+﻿@page "/account/login"
+@using System.Security.Claims
+@using DataAccessLibrary
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authentication.Cookies
+@using Pokemon
+@inject NavigationManager NavigationManager
+@inject IUserData UserData
+
+<PageTitle>Login</PageTitle>
+
+<div>
+    <div>
+        <EditForm Model="@LoginView" OnValidSubmit="OnSubmitLogin" FormName="LoginForm">
+            <DataAnnotationsValidator/>
+            <div>
+                <img src="/images/avatar.png"  alt="Generic Avatar"/>
+                <h3>Login</h3>
+            </div>
+            <div>
+                <label>Username</label>
+                <InputText @bind-Value="LoginView.Username" placeholder="Username" />
+                <ValidationMessage For="() => LoginView.Username" />
+            </div>
+            <div>
+                <label>Password</label>
+                <InputText @bind-Value="LoginView.Password" placeholder="Password" type="password"/>
+                <ValidationMessage For="() => LoginView.Password" />
+            </div>
+            <div>
+                <span>@errorMessage</span>
+            </div>
+            <div>
+                <button type="submit">Login</button>
+            </div>
+        </EditForm>
+        <div>
+            <a  href="account/register">Create new account</a>
+        </div>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    public required HttpContext HttpContext { get; set; }
+    
+    [SupplyParameterFromForm]
+    public LoginViewModel LoginView { get; set; } = new();
+
+    private string? errorMessage;
+    
+    protected override Task OnInitializedAsync()
+    {
+        return Task.CompletedTask;
+    }
+    
+    private async Task OnSubmitLogin()
+    {
+        if (LoginView.Username == null)
+        {
+            errorMessage = "Please enter a Username.";
+            return;
+        }
+
+        var allUsers = await UserData.GetUsers();
+        var userAccount = allUsers.FirstOrDefault(user => user.Username == LoginView.Username);
+
+        if (userAccount is null)
+        {
+            errorMessage = "No Account found with this Username.";
+            return;
+        }
+
+        bool verify = BCrypt.Net.BCrypt.Verify(LoginView.Password, userAccount.Passhash);
+
+        if (!verify)
+        {
+            errorMessage = "Invalid Password.";
+            return;
+        }
+        
+        var claims = new List<Claim>()
+        {
+            new Claim(ClaimTypes.Name, userAccount.Username),
+            new Claim(ClaimTypes.Role, "Administrator")
+        };
+
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var principal = new ClaimsPrincipal(identity);
+        await HttpContext.SignInAsync(principal);
+        NavigationManager.NavigateTo("/");
+        
+    }
+}

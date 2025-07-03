@@ -1,5 +1,8 @@
 ﻿@page "/counter"
 @rendermode InteractiveServer
+@using DataAccessLibrary
+@using DataAccessLibrary.Models
+@inject IUserData UserData
 
 <PageTitle>Counter</PageTitle>
 
@@ -9,8 +12,27 @@
 
 <button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
 
+@if (_users is null || _users.Count == 0)
+{
+    <p>nothing here</p>
+}
+else
+{
+    foreach (var user in _users)
+    {
+        <p>@user.Username</p>
+        <p>@user.UserId</p>
+    }
+}
+
 @code {
+    private List<UserModel>? _users;
     private int currentCount = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _users = await UserData.GetUsers();
+    }
 
     private void IncrementCount()
     {

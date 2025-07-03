@@ -1,0 +1,23 @@
+﻿@page "/account/logout"
+@using Microsoft.AspNetCore.Authentication
+@inject NavigationManager NavigationManager
+<h3>Successful Logout</h3>
+<h4>You've successfully logged out.</h4>
+
+@code {
+    [CascadingParameter]
+    public HttpContext? HttpContext { get; set; }
+
+    // TODO: Login ist von hier aus nicht mehr anklickbar bis man die seite wechselt, probably wegen den notwendigen Static Renderer
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        if (HttpContext is { User.Identity.IsAuthenticated: true })
+        {
+            await HttpContext.SignOutAsync();
+            NavigationManager.NavigateTo("/account/logout", true);
+        }
+    }
+
+}
