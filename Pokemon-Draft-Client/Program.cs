@@ -38,6 +38,9 @@ builder.Services.AddSession(options =>
 // Add Database-Services
 builder.Services.AddTransient<ISqlDataAccess, SqlDataAccess>();
 builder.Services.AddTransient<IUserData, UserData>();
+builder.Services.AddTransient<ISessionData, SessionData>();
+builder.Services.AddTransient<IParticipationData, ParticipationData>();
+builder.Services.AddTransient<IPickData, PickData>();
 
 var app = builder.Build();
 
