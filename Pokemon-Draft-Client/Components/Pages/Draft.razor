@@ -1,7 +1,12 @@
 ﻿@page "/draft"
+@using DataAccessLibrary
+@using DataAccessLibrary.Models
 @using Microsoft.AspNetCore.Authorization
 @rendermode InteractiveServer
-@attribute [Authorize(Roles= "Administrator,User")];
+@attribute [Authorize(Roles= "Administrator,User")]
+@inject ISessionData SessionData
+@inject IParticipationData ParticipationData
+@inject IPickData PickData
 
 <PageTitle>Pokemon Draft</PageTitle>
 
@@ -9,21 +14,56 @@
 
 <p>This component is for drafting.</p>
 
-<input type="text" @bind="_text">
-<button @onclick="OnSubmitButton">Test</button>
+<div>
+    <div>
+        <EditForm Model="@Session" OnValidSubmit="OnSubmitSession" FormName="SessionForm">
+            <DataAnnotationsValidator/>
+            <div>
+                <label>Lobby Name</label>
+                <InputText @bind-Value="Session.SessionName" placeholder="Draft Lobby" />
+            </div>
+            <div>
+                <InputRadioGroup @bind-Value="Session.SessionType">
+                    <label>Choose your Draft-Type:</label>
+                    <div>
+                        <InputRadio Value='"Standard"' /><label>Standard</label>
+                    </div>
+                    <div>
+                        <InputRadio Value='"Auction"' /><label>Auction</label>
+                    </div>
+                </InputRadioGroup>
+            </div>
+            <div>
+                <span>@errorMessage</span>
+            </div>
+            <div>
+                <button type="submit">Create</button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
 
 @code {
+    
+    [SupplyParameterFromForm]
+    SessionModel Session { get; set; } = new()
+    {
+        // setting default session type
+        SessionType = "Standard"
+    };
 
-    string? _text;
+    private string? errorMessage;
     
     protected override Task OnInitializedAsync()
     {
         return Task.CompletedTask;
     }
     
-    
-    private void OnSubmitButton()
+    private async Task OnSubmitSession()
     {
-        Console.WriteLine(_text);
+        // setting the default lobby name if inputfield was left empty
+        Session.SessionName ??= "Draft Lobby";
+        await SessionData.PostSession(Session);
     }
 }
