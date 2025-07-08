@@ -1,6 +1,8 @@
+global using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using DataAccessLibrary;
 using DataAccessLibrary.Interfaces;
+using Pokemon_Draft_Client;
 using Pokemon_Draft_Client.Components;
 
 
@@ -22,7 +24,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     });
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
-
+builder.Services.AddSingleton<CircuitHandler, CircuitHandlerService>();
 /*
     // add Session to the WebApp 
 builder.Services.AddDistributedMemoryCache();

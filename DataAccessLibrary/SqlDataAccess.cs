@@ -35,7 +35,16 @@ namespace DataAccessLibrary
             string? connectionString = _config["PostgresConnectionString"];
 
             using IDbConnection connection = new NpgsqlConnection(connectionString);
-            await connection.ExecuteAsync(sql, parameters);
+            await connection.ExecuteScalarAsync(sql, parameters);
+        }
+        
+        public async Task<int> SaveDataReturnId<T>(string sql, T parameters)
+        {
+            string? connectionString = _config["PostgresConnectionString"];
+
+            using IDbConnection connection = new NpgsqlConnection(connectionString);
+            int id = (int)(await connection.ExecuteScalarAsync(sql, parameters) ?? -1);
+            return id;
         }
 }
 }

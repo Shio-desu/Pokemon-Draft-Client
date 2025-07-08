@@ -64,6 +64,6 @@
     {
         // setting the default lobby name if inputfield was left empty
         Session.SessionName ??= "Draft Lobby";
-        await SessionData.PostSession(Session);
+        int lobbyId = await SessionData.PostSessionReturnId(Session);
     }
 }

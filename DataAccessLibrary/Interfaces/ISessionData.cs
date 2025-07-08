@@ -8,4 +8,5 @@ public interface ISessionData
 {
     Task<List<SessionModel>> GetSessions();
     Task PostSession(SessionModel session);
+    Task<int> PostSessionReturnId(SessionModel session);
 }

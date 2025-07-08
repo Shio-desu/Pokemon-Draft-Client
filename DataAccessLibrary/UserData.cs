@@ -13,6 +13,7 @@ namespace DataAccessLibrary
         private readonly string _usernameColumnString = "username";
         private readonly string _passhashColumnString = "passhash";
         private readonly string _saltColumnString = "salt";
+        private readonly string _isAdminColumnString = "is_admin";
         public UserData(ISqlDataAccess db)
         {
             _db = db;
@@ -26,8 +27,8 @@ namespace DataAccessLibrary
 
         public Task PostUser(UserModel user)
         {
-            string sql = $"insert into users ({_usernameColumnString}, {_passhashColumnString}, {_saltColumnString}) " +
-                         "values (@Username, @Passhash, @Salt);";
+            string sql = $"insert into users ({_usernameColumnString}, {_passhashColumnString}, {_saltColumnString}, {_isAdminColumnString})" +
+                         "values (@Username, @Passhash, @Salt, @IsAdmin);";
             return _db.SaveData(sql, user);
         }
     }

@@ -10,6 +10,7 @@ namespace DataAccessLibrary
         private readonly ISqlDataAccess _db;
         
         // declaring the names of the columns
+        private readonly string _sessionIdColumnString = "session_id";
         private readonly string _startDateColumnString = "start_date";
         private readonly string _endDateColumnString = "end_date";
         private readonly string _sessionNameColumnString = "session_name";
@@ -32,6 +33,14 @@ namespace DataAccessLibrary
             string sql = $"insert into sessions ({_startDateColumnString}, {_endDateColumnString}, {_sessionNameColumnString}, {_sessionTypeColumnString}, {_hasStartedColumnString}) " +
                          "values (@StartDate, @EndDate, @SessionName, @SessionType, @HasStarted);";
             return _db.SaveData(sql, session);
+        }
+        
+        public Task<int> PostSessionReturnId(SessionModel session)
+        {
+            string sql = $"insert into sessions ({_startDateColumnString}, {_endDateColumnString}, {_sessionNameColumnString}, {_sessionTypeColumnString}, {_hasStartedColumnString}) " +
+                         "values (@StartDate, @EndDate, @SessionName, @SessionType, @HasStarted)" +
+                         $"returning {_sessionIdColumnString};";
+            return _db.SaveDataReturnId(sql, session);
         }
     }
 }
