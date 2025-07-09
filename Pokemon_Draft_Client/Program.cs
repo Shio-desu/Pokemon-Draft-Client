@@ -4,6 +4,8 @@ using DataAccessLibrary;
 using DataAccessLibrary.Interfaces;
 using Pokemon_Draft_Client;
 using Pokemon_Draft_Client.Components;
+using Pokemon_Draft_Client.Services.Circuits;
+using Pokemon_Draft_Client.Services.Circuits.Interfaces;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,9 +24,12 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LogoutPath = "/logout";
         options.AccessDeniedPath = "/accessdenied";
     });
+
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddSingleton<CircuitHandler, CircuitHandlerService>();
+builder.Services.AddScoped<CircuitHandler, CircuitHandlerService>();
+builder.Services.AddSingleton<ICircuitUserHandlerService, CircuitUserHandlerService>();
+
 /*
     // add Session to the WebApp 
 builder.Services.AddDistributedMemoryCache();

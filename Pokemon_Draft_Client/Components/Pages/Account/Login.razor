@@ -88,6 +88,9 @@
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var principal = new ClaimsPrincipal(identity);
         await HttpContext.SignInAsync(principal);
+        
+        // TODO: on sign in, connect circuit id with user
+        
         NavigationManager.NavigateTo("/");
         
     }
