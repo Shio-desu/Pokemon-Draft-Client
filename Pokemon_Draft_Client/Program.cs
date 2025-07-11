@@ -7,7 +7,6 @@ using Pokemon_Draft_Client.Components;
 using Pokemon_Draft_Client.Services.Circuits;
 using Pokemon_Draft_Client.Services.Circuits.Interfaces;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container. --------------------------------------------------------------------------------------

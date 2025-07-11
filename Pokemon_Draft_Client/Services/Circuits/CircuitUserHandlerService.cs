@@ -7,40 +7,40 @@ namespace Pokemon_Draft_Client.Services.Circuits;
 
 public class CircuitUserHandlerService : ICircuitUserHandlerService
 {
-    public ConcurrentDictionary<string, UserCircuits> Users { get; private set; } = new();
-    public event EventHandler UsersChanged;
+    public ConcurrentDictionary<int, UserCircuits> UserCircuitsMap { get; private set; } = new();
+    public event EventHandler UserCircuitsChanged;
     
-    void OnUsersChanged() => UsersChanged?.Invoke(this, EventArgs.Empty);
+    void OnUserCircuitsChanged() => UserCircuitsChanged?.Invoke(this, EventArgs.Empty);
 
-    public void Connect(string user, string circuitId)
+    public void Connect(int userId, string circuitId)
     {
         // checks if user was already logged from a different session and adds the circuit to the user
-        if (Users.ContainsKey(user))
+        if (UserCircuitsMap.ContainsKey(userId))
         {
-            Users[user].CircuitIds.Add(circuitId);
+            UserCircuitsMap[userId].CircuitIds.Add(circuitId);
         }
         else // or creates a new user circuit collection, if user wasn't logged before
         {
             var userCircuits = new UserCircuits
             {
-                User = user,
+                UserId = userId,
                 CircuitIds = [circuitId]
             };
-            Users[user] = userCircuits;
+            UserCircuitsMap[userId] = userCircuits;
         }
     }
 
-    public void Disconnect(string user, string circuitId)
+    public void Disconnect(int userId, string circuitId)
     {
         // removes the circuit id from the user circuit-list
-        if (!Users[user].CircuitIds.Remove(circuitId)) return;
-        if (Users[user].CircuitIds.Count != 0) return;
+        if (!UserCircuitsMap[userId].CircuitIds.Remove(circuitId)) return;
+        if (UserCircuitsMap[userId].CircuitIds.Count != 0) return;
         
         // removes the user from the user-dictionary if they don't have a connected circuit anymore
-        Users.TryRemove(user, out var userRemoved);
+        UserCircuitsMap.TryRemove(userId, out var userRemoved);
         if (userRemoved != null)
         {
-            OnUsersChanged();
+            OnUserCircuitsChanged();
         }
     }
 }

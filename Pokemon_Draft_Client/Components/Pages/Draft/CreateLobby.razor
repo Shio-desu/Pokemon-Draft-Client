@@ -1,5 +1,6 @@
-﻿@page "/draft"
+﻿@page "/draft/createlobby"
 @using DataAccessLibrary
+@using DataAccessLibrary.Interfaces
 @using DataAccessLibrary.Models
 @using Microsoft.AspNetCore.Authorization
 @rendermode InteractiveServer
@@ -12,7 +13,7 @@
 
 <h1>Draft</h1>
 
-<p>This component is for drafting.</p>
+<p>This component is for creating or joining a lobby.</p>
 
 <div>
     <div>
@@ -26,10 +27,10 @@
                 <InputRadioGroup @bind-Value="Session.SessionType">
                     <label>Choose your Draft-Type:</label>
                     <div>
-                        <InputRadio Value='"Standard"' /><label>Standard</label>
+                        <InputRadio Value="LobbyType.Default" /><label>Default</label>
                     </div>
                     <div>
-                        <InputRadio Value='"Auction"' /><label>Auction</label>
+                        <InputRadio Value="LobbyType.Auction" /><label>Auction</label>
                     </div>
                 </InputRadioGroup>
             </div>
@@ -50,7 +51,7 @@
     SessionModel Session { get; set; } = new()
     {
         // setting default session type
-        SessionType = "Standard"
+        SessionType = LobbyType.Default
     };
 
     private string? errorMessage;

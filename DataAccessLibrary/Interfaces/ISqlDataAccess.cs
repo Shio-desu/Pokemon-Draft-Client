@@ -7,7 +7,7 @@ namespace DataAccessLibrary.Interfaces
     {
         string ConnectionStringName { get; set; }
         Task<List<T>> LoadData<T, TU>(string sql, TU parameters);
-        Task SaveData<T>(string sql, T parameters);
+        Task<T> SaveData<T>(string sql, T parameters);
         Task<int> SaveDataReturnId<T>(string sql, T parameters);
     }
 }

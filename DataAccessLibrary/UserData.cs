@@ -5,31 +5,40 @@ using DataAccessLibrary.Models;
 
 namespace DataAccessLibrary
 {
-    public class UserData : IUserData
+    public class UserData(ISqlDataAccess db) : IUserData
     {
-        private readonly ISqlDataAccess _db;
-        
         // declaring the names of the columns
+        private readonly string _userIdColumnString = "user_id";
         private readonly string _usernameColumnString = "username";
         private readonly string _passhashColumnString = "passhash";
         private readonly string _saltColumnString = "salt";
         private readonly string _isAdminColumnString = "is_admin";
-        public UserData(ISqlDataAccess db)
-        {
-            _db = db;
-        }
 
         public Task<List<UserModel>> GetUsers()
         {
             string sql = "select * from users";
-            return _db.LoadData<UserModel, dynamic>(sql, new { });
+            return db.LoadData<UserModel, dynamic>(sql, new { });
         }
 
-        public Task PostUser(UserModel user)
+        public Task<UserModel> PostUser(UserModel user)
         {
             string sql = $"insert into users ({_usernameColumnString}, {_passhashColumnString}, {_saltColumnString}, {_isAdminColumnString})" +
                          "values (@Username, @Passhash, @Salt, @IsAdmin);";
-            return _db.SaveData(sql, user);
+            return db.SaveData(sql, user);
+        }
+
+        public Task<int> PostUserReturnId(UserModel user)
+        {
+            string sql = $"insert into users ({_usernameColumnString}, {_passhashColumnString}, {_saltColumnString}, {_isAdminColumnString})" +
+                         "values (@Username, @Passhash, @Salt, @IsAdmin) " +
+                         $"returning {_userIdColumnString};";
+            return db.SaveDataReturnId(sql, user);
+        }
+
+        public Task DeleteUser(UserModel user)
+        {
+            string sql = $"delete from users where {_userIdColumnString} = @UserId";
+            return db.SaveData(sql, user);
         }
     }
 }
