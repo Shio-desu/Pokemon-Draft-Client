@@ -26,8 +26,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddScoped<CircuitHandler, CircuitHandlerService>();
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+/*builder.Services.AddScoped<CircuitHandler, CircuitHandlerService>();*/
+builder.Services.AddSingleton<CircuitHandler, CircuitHandlerService>();
 builder.Services.AddSingleton<ICircuitUserHandlerService, CircuitUserHandlerService>();
+builder.Services.AddSingleton<ILobbyUserHandlerService, LobbyUserHandlerService>();
 
 /*
     // add Session to the WebApp 
@@ -62,9 +65,9 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 //app.UseSession();
-app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseAntiforgery();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()

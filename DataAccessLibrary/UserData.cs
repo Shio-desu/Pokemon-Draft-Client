@@ -22,14 +22,14 @@ namespace DataAccessLibrary
 
         public Task<UserModel> PostUser(UserModel user)
         {
-            string sql = $"insert into users ({_usernameColumnString}, {_passhashColumnString}, {_saltColumnString}, {_isAdminColumnString})" +
-                         "values (@Username, @Passhash, @Salt, @IsAdmin);";
+            string sql = $"insert into users ({_usernameColumnString}, {_passhashColumnString}, {_saltColumnString}, {_isAdminColumnString}) " +
+                         "values (@Username, @Passhash, @Salt, @IsAdmin)";
             return db.SaveData(sql, user);
         }
 
         public Task<int> PostUserReturnId(UserModel user)
         {
-            string sql = $"insert into users ({_usernameColumnString}, {_passhashColumnString}, {_saltColumnString}, {_isAdminColumnString})" +
+            string sql = $"insert into users ({_usernameColumnString}, {_passhashColumnString}, {_saltColumnString}, {_isAdminColumnString}) " +
                          "values (@Username, @Passhash, @Salt, @IsAdmin) " +
                          $"returning {_userIdColumnString};";
             return db.SaveDataReturnId(sql, user);

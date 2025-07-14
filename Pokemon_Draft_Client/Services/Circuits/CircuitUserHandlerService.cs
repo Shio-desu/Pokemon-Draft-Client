@@ -8,10 +8,14 @@ namespace Pokemon_Draft_Client.Services.Circuits;
 public class CircuitUserHandlerService : ICircuitUserHandlerService
 {
     public ConcurrentDictionary<int, UserCircuits> UserCircuitsMap { get; private set; } = new();
-    public event EventHandler UserCircuitsChanged;
+    public static event EventHandler<int>? UserCircuitsChanged;
+    void OnUserCircuitsChanged(int userId) => UserCircuitsChanged?.Invoke(this, userId);
     
-    void OnUserCircuitsChanged() => UserCircuitsChanged?.Invoke(this, EventArgs.Empty);
-
+    public CircuitUserHandlerService()
+    {
+        CircuitHandlerService.UserIdChanged += HandleUserIdChanged;
+    }
+    
     public void Connect(int userId, string circuitId)
     {
         // checks if user was already logged from a different session and adds the circuit to the user
@@ -33,14 +37,24 @@ public class CircuitUserHandlerService : ICircuitUserHandlerService
     public void Disconnect(int userId, string circuitId)
     {
         // removes the circuit id from the user circuit-list
-        if (!UserCircuitsMap[userId].CircuitIds.Remove(circuitId)) return;
-        if (UserCircuitsMap[userId].CircuitIds.Count != 0) return;
+        if (!UserCircuitsMap[userId].CircuitIds.Remove(circuitId)) 
+            return;
+        if (UserCircuitsMap[userId].CircuitIds.Count != 0) 
+            return;
         
         // removes the user from the user-dictionary if they don't have a connected circuit anymore
         UserCircuitsMap.TryRemove(userId, out var userRemoved);
         if (userRemoved != null)
         {
-            OnUserCircuitsChanged();
+            OnUserCircuitsChanged(userId);
         }
+    }
+
+    private void HandleUserIdChanged(object? sender, UserIdEventArgs userIds)
+    {
+        UserCircuitsMap.Remove(userIds.OldUserId, out var removedUserCircuits);
+        if (removedUserCircuits != null) 
+            UserCircuitsMap[userIds.NewUserId] = removedUserCircuits;
+        OnUserCircuitsChanged(userIds.OldUserId);
     }
 }

@@ -3,11 +3,14 @@
 @using DataAccessLibrary.Interfaces
 @using DataAccessLibrary.Models
 @using Microsoft.AspNetCore.Authorization
+@using Pokemon_Draft_Client.Services.Circuits
 @rendermode InteractiveServer
 @attribute [Authorize(Roles= "Administrator,User")]
 @inject ISessionData SessionData
 @inject IParticipationData ParticipationData
 @inject IPickData PickData
+@inject ILobbyUserHandlerService LobbyUserHandlerService
+@inject CircuitHandler CircuitHandler
 
 <PageTitle>Pokemon Draft</PageTitle>
 
@@ -15,6 +18,23 @@
 
 <p>This component is for creating or joining a lobby.</p>
 
+<div>
+    List of open Lobbies:
+    <div>
+        @foreach (var lobbyUsers in LobbyUserHandlerService.LobbyUsersMap.Values)
+        {
+            <div>
+                @lobbyUsers.Session.SessionName
+                <div>
+                    @foreach (var users in lobbyUsers.UserIds)
+                    {
+                        @users
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
 <div>
     <div>
         <EditForm Model="@Session" OnValidSubmit="OnSubmitSession" FormName="SessionForm">
@@ -53,18 +73,18 @@
         // setting default session type
         SessionType = LobbyType.Default
     };
-
+    
     private string? errorMessage;
+    private CircuitHandlerService _circuitHandlerService;
     
     protected override Task OnInitializedAsync()
     {
+        _circuitHandlerService  = (CircuitHandlerService)CircuitHandler;
         return Task.CompletedTask;
     }
     
     private async Task OnSubmitSession()
     {
-        // setting the default lobby name if inputfield was left empty
-        Session.SessionName ??= "Draft Lobby";
-        int lobbyId = await SessionData.PostSessionReturnId(Session);
+        await LobbyUserHandlerService.CreateLobby(Session.SessionName, Session.SessionType, _circuitHandlerService.UserId);
     }
 }

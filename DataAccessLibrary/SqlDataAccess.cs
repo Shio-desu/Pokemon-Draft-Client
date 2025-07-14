@@ -30,7 +30,7 @@ namespace DataAccessLibrary
             string? connectionString = config["PostgresConnectionString"];
 
             using IDbConnection connection = new NpgsqlConnection(connectionString);
-            var data = await connection.ExecuteScalarAsync(sql + " return *;", parameters);
+            var data = await connection.QueryFirstAsync<T>(sql + " returning *;", parameters);
             if (data == null) throw new NullReferenceException();
             return (T) data;
         }
