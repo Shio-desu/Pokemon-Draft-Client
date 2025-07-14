@@ -17,22 +17,33 @@ namespace DataAccessLibrary
 
         public Task<List<SessionModel>> GetSessions()
         {
-            string sql = "select * from sessions";
+            string sql = $"select {_sessionIdColumnString} as SessionId," +
+                         $"{_startDateColumnString} as StartDate," +
+                         $"{_endDateColumnString} as EndDate," +
+                         $"{_sessionNameColumnString} as SessionName," +
+                         $"{_sessionTypeColumnString} as SessionType," +
+                         $"{_hasStartedColumnString} as hasStarted from sessions;";
             return db.LoadData<SessionModel, dynamic>(sql, new { });
         }
 
         public Task<SessionModel> PostSession(SessionModel session)
         {
             string sql = $"insert into sessions ({_startDateColumnString}, {_endDateColumnString}, {_sessionNameColumnString}, {_sessionTypeColumnString}, {_hasStartedColumnString}) " +
-                         "values (@StartDate, @EndDate, @SessionName, @SessionType, @HasStarted);";
-            return db.SaveData(sql, session);
+                         "values (@StartDate, @EndDate, @SessionName, @SessionType, @HasStarted) " +
+                         $"returning {_sessionIdColumnString} as SessionId," +
+                         $"{_startDateColumnString} as StartDate," +
+                         $"{_endDateColumnString} as EndDate," +
+                         $"{_sessionNameColumnString} as SessionName," +
+                         $"{_sessionTypeColumnString} as SessionType," +
+                         $"{_hasStartedColumnString} as hasStarted;";
+            return db.SaveDataReturnObject(sql, session);
         }
         
         public Task<int> PostSessionReturnId(SessionModel session)
         {
             string sql = $"insert into sessions ({_startDateColumnString}, {_endDateColumnString}, {_sessionNameColumnString}, {_sessionTypeColumnString}, {_hasStartedColumnString}) " +
                          "values (@StartDate, @EndDate, @SessionName, @SessionType, @HasStarted) " +
-                         $"returning {_sessionIdColumnString};";
+                         $"returning {_sessionIdColumnString} as SessionId;";
             return db.SaveDataReturnId(sql, session);
         }
         

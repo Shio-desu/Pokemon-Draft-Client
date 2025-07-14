@@ -14,22 +14,27 @@ namespace DataAccessLibrary
 
         public Task<List<ParticipationModel>> GetParticipations()
         {
-            string sql = "select * from participations";
+            string sql = $"select {_participationIdColumnString} as ParticipationId," +
+                         $"{_userIdColumnString} as UserId," +
+                         $"{_sessionIdColumnString} as SessionId from participations;";
             return db.LoadData<ParticipationModel, dynamic>(sql, new { });
         }
 
         public Task<ParticipationModel> PostParticipation(ParticipationModel participation)
         {
             string sql = $"insert into participations ({_userIdColumnString}, {_sessionIdColumnString}) " +
-                         "values (@UserId, @SessionId);";
-            return db.SaveData(sql, participation);
+                         "values (@UserId, @SessionId) " +
+                         $"returning {_participationIdColumnString} as ParticipationId," +
+                         $"{_userIdColumnString} as UserId," +
+                         $"{_sessionIdColumnString} as SessionId;";
+            return db.SaveDataReturnObject(sql, participation);
         }
 
         public Task<int> PostParticipationReturnId(ParticipationModel participation)
         {
             string sql = $"insert into participations ({_userIdColumnString}, {_sessionIdColumnString}) " +
                          "values (@UserId, @SessionId) " +
-                         $"returning {_participationIdColumnString};";
+                         $"returning {_participationIdColumnString} as ParticipationId;";
             return db.SaveDataReturnId(sql, participation);
         }
         

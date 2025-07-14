@@ -14,20 +14,27 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
 
     private readonly ISessionData _sessionData;
     private readonly IParticipationData _participationData;
+    private readonly IUserData _userData;
     private readonly ICircuitUserHandlerService _circuitUserHandlerService;
     
-    public LobbyUserHandlerService(ISessionData sessionData, IParticipationData participationData, ICircuitUserHandlerService circuitUserHandlerService)
+    public LobbyUserHandlerService(ISessionData sessionData, IParticipationData participationData, IUserData userData, ICircuitUserHandlerService circuitUserHandlerService)
     {
         _sessionData = sessionData;
         _participationData = participationData;
+        _userData = userData;
         _circuitUserHandlerService = circuitUserHandlerService;
         CircuitUserHandlerService.UserCircuitsChanged += HandleUserCircuitsChanged;
     }
     
-    public async Task CreateLobby(string lobbyName, LobbyType lobbyType, int userId)
+    public async Task CreateLobby(string lobbyName, LobbyType lobbyType, string username)
     {
-        if (userId == -1) 
+        if (username.Equals(string.Empty)) 
             return;
+        
+        var users = await _userData.GetUsers();
+        var userId = users.Find(user => user.Username == username)?.UserId ?? -1;
+        if (userId == -1)
+            throw new Exception("User not found in database");
         
         SessionModel newSession = new()
         {
@@ -36,7 +43,7 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
             SessionType = lobbyType
         };
         var session = await _sessionData.PostSession(newSession);
-
+        
         ParticipationModel newParticipation = new()
         {
             SessionId = session.SessionId,
@@ -47,16 +54,21 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
         LobbyUsersMap[session.SessionId] = new LobbyUsers
         {
             Session = session,
-            UserIds = [userId]
+            Usernames = [username]
         };
         
         OnLobbyUsersChanged();
     }
     
-    public async Task Join(int lobbyId, int userId)
+    public async Task Join(int lobbyId, string username)
     {
-        if (userId == -1) 
+        if (username.Equals(string.Empty)) 
             return;
+        
+        var users = await _userData.GetUsers();
+        var userId = users.Find(user => user.Username == username)?.UserId ?? -1;
+        if (userId == -1)
+            throw new Exception("User not found in database");
         
         if (LobbyUsersMap.ContainsKey(lobbyId))
         {
@@ -66,17 +78,22 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
                 UserId = userId
             };
             var participation = await _participationData.PostParticipation(newParticipation);
-            LobbyUsersMap[lobbyId].UserIds.Add(userId);
+            LobbyUsersMap[lobbyId].Usernames.Add(username);
             OnLobbyUsersChanged();
         }
     }
 
-    public async Task Leave(int lobbyId, int userId)
+    public async Task Leave(int lobbyId, string username)
     {
         if (!LobbyUsersMap.ContainsKey(lobbyId)) 
             return;
         
-        LobbyUsersMap[lobbyId].UserIds.Remove(userId);
+        var users = await _userData.GetUsers();
+        var userId = users.Find(user => user.Username == username)?.UserId ?? -1;
+        if (userId == -1)
+            throw new Exception("User not found in database");
+        
+        LobbyUsersMap[lobbyId].Usernames.Remove(username);
         ParticipationModel participationToDelete = new()
         {
             SessionId = lobbyId,
@@ -85,8 +102,9 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
         await _participationData.DeleteParticipation(participationToDelete);
         OnLobbyUsersChanged();
         
-        if (LobbyUsersMap[userId].UserIds.Count != 0) 
+        if (LobbyUsersMap[lobbyId].Usernames.Count != 0) 
             return;
+        
         // deletes the lobby when the last user has left
         LobbyUsersMap.Remove(lobbyId);
         SessionModel sessionToDelete = new()
@@ -96,21 +114,19 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
         await _sessionData.DeleteSession(sessionToDelete);
     }
 
-    private void HandleUserCircuitsChanged(object? sender, int userId)
+    private void HandleUserCircuitsChanged(object? sender, string username)
     {
-        if (userId == -1)
+        if (username.Equals(string.Empty))
             return;
         // if the user id is not part of the user circuits anymore, ergo closed the session / logged out
-        if (!_circuitUserHandlerService.UserCircuitsMap.ContainsKey(userId))
+        if (!_circuitUserHandlerService.UserCircuitsMap.ContainsKey(username))
         {
             foreach (var lobbyId in LobbyUsersMap.Keys)
             {
-                if (LobbyUsersMap[lobbyId].UserIds.Contains(userId))
-                {
-                    _ = Leave(lobbyId, userId);
-                    OnLobbyUsersChanged();
-                    return;
-                }
+                if (!LobbyUsersMap[lobbyId].Usernames.Contains(username)) continue;
+                _ = Leave(lobbyId, username);
+                OnLobbyUsersChanged();
+                return;
             }
         }
     }

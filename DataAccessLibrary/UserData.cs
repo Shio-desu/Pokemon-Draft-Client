@@ -16,28 +16,38 @@ namespace DataAccessLibrary
 
         public Task<List<UserModel>> GetUsers()
         {
-            string sql = "select * from users";
+            string sql = $"select {_userIdColumnString} as UserId," +
+                         $" {_usernameColumnString} as Username," +
+                         $" {_passhashColumnString} as Passhash," +
+                         $" {_saltColumnString} as Salt," +
+                         $" {_isAdminColumnString} as isAdmin from users;";
             return db.LoadData<UserModel, dynamic>(sql, new { });
         }
 
         public Task<UserModel> PostUser(UserModel user)
         {
-            string sql = $"insert into users ({_usernameColumnString}, {_passhashColumnString}, {_saltColumnString}, {_isAdminColumnString}) " +
-                         "values (@Username, @Passhash, @Salt, @IsAdmin)";
-            return db.SaveData(sql, user);
+            string sql =
+                $"insert into users ({_usernameColumnString}, {_passhashColumnString}, {_saltColumnString}, {_isAdminColumnString}) " +
+                "values (@Username, @Passhash, @Salt, @IsAdmin)" +
+                $" returning {_userIdColumnString} as UserId," +
+                $" {_usernameColumnString} as Username," +
+                $" {_passhashColumnString} as Passhash," +
+                $" {_saltColumnString} as Salt," +
+                $" {_isAdminColumnString} as isAdmin;";
+            return db.SaveDataReturnObject(sql, user);
         }
 
         public Task<int> PostUserReturnId(UserModel user)
         {
             string sql = $"insert into users ({_usernameColumnString}, {_passhashColumnString}, {_saltColumnString}, {_isAdminColumnString}) " +
                          "values (@Username, @Passhash, @Salt, @IsAdmin) " +
-                         $"returning {_userIdColumnString};";
+                         $"returning {_userIdColumnString} as UserId;";
             return db.SaveDataReturnId(sql, user);
         }
-
+        
         public Task DeleteUser(UserModel user)
         {
-            string sql = $"delete from users where {_userIdColumnString} = @UserId";
+            string sql = $"delete from users where {_userIdColumnString} = @UserId;";
             return db.SaveData(sql, user);
         }
     }

@@ -26,7 +26,7 @@
             <div>
                 @lobbyUsers.Session.SessionName
                 <div>
-                    @foreach (var users in lobbyUsers.UserIds)
+                    @foreach (var users in lobbyUsers.Usernames)
                     {
                         @users
                     }
@@ -85,6 +85,6 @@
     
     private async Task OnSubmitSession()
     {
-        await LobbyUserHandlerService.CreateLobby(Session.SessionName, Session.SessionType, _circuitHandlerService.UserId);
+        await LobbyUserHandlerService.CreateLobby(Session.SessionName, Session.SessionType, _circuitHandlerService.Username);
     }
 }

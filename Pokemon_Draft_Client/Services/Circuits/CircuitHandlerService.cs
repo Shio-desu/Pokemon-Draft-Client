@@ -4,44 +4,39 @@ using Pokemon_Draft_Client.Services.Circuits.Interfaces;
 
 namespace Pokemon_Draft_Client.Services.Circuits;
 
-public class UserIdEventArgs(int newUserId, int oldUserId) : EventArgs
+public class UsernameEventArgs(string newUsername, string oldUsername) : EventArgs
 {
-    public int NewUserId { get; private set; } = newUserId;
-    public int OldUserId { get; private set; }  = oldUserId;
+    public string NewUsername { get; private set; } = newUsername;
+    public string OldUsername { get; private set; }  = oldUsername;
 }
 
-public class CircuitHandlerService(IHttpContextAccessor httpContextAccessor, ICircuitUserHandlerService circuitUserHandlerService, IUserData userData) : CircuitHandler
+public class CircuitHandlerService(IHttpContextAccessor httpContextAccessor, ICircuitUserHandlerService circuitUserHandlerService) : CircuitHandler
 {
-    public string CircuitId { get; private set; } = "";
-    public int UserId { get; private set; } = -1;
-    public static event EventHandler<UserIdEventArgs>? UserIdChanged;
-    void OnUserIdChanged(int oldUserId, int newUserId) => UserIdChanged?.Invoke(this, new UserIdEventArgs(oldUserId, newUserId));
-    
+    public string CircuitId { get; private set; } = string.Empty;
+    public string Username { get; private set; } = string.Empty;
+    public static event EventHandler<UsernameEventArgs>? UsernameChanged;
+    void OnUsernameChanged(string oldUsername, string newUsername) => UsernameChanged?.Invoke(this, new UsernameEventArgs(newUsername, oldUsername));
+
     // On opening an instance of this web app, the circuit id and corresponding user is saved
     public override Task OnCircuitOpenedAsync(Circuit circuit, CancellationToken cancellationToken)
     {
         CircuitId = circuit.Id;
-        var username = httpContextAccessor.HttpContext?.User.Identity?.Name ?? string.Empty;
+        Username = httpContextAccessor.HttpContext?.User.Identity?.Name ?? string.Empty;
         
-        var users = userData.GetUsers();
-        var user = users.Result.Find(user => user.Username == username);
-        if (user != null)
-            UserId = user.UserId;
-        
-        circuitUserHandlerService.Connect(UserId, CircuitId);
+        circuitUserHandlerService.Connect(Username, CircuitId);
         return base.OnCircuitOpenedAsync(circuit, cancellationToken);
     }
 
     // On closing an instance of this web app
     public override Task OnCircuitClosedAsync(Circuit circuit, CancellationToken cancellationToken)
     {
-        circuitUserHandlerService.Disconnect(UserId, CircuitId);
+        circuitUserHandlerService.Disconnect(Username, CircuitId);
         return base.OnCircuitClosedAsync(circuit, cancellationToken);
     }
 
-    public void ChangeUserId(int newUserId)
+    public void ChangeUsername(string newUsername)
     {
-        OnUserIdChanged(UserId, newUserId);
-        UserId = newUserId;
+        OnUsernameChanged(Username, newUsername);
+        Username = newUsername;
     }
 }

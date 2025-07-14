@@ -24,13 +24,19 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.AccessDeniedPath = "/accessdenied";
     });
 
+// Add Database-Services
+builder.Services.AddTransient<ISqlDataAccess, SqlDataAccess>();
+builder.Services.AddTransient<IUserData, UserData>();
+builder.Services.AddTransient<ISessionData, SessionData>();
+builder.Services.AddTransient<IParticipationData, ParticipationData>();
+builder.Services.AddTransient<IPickData, PickData>();
+
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
-/*builder.Services.AddScoped<CircuitHandler, CircuitHandlerService>();*/
-builder.Services.AddSingleton<CircuitHandler, CircuitHandlerService>();
 builder.Services.AddSingleton<ICircuitUserHandlerService, CircuitUserHandlerService>();
 builder.Services.AddSingleton<ILobbyUserHandlerService, LobbyUserHandlerService>();
+builder.Services.AddScoped<CircuitHandler, CircuitHandlerService>();
 
 /*
     // add Session to the WebApp 
@@ -44,12 +50,7 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });*/
 
-// Add Database-Services
-builder.Services.AddTransient<ISqlDataAccess, SqlDataAccess>();
-builder.Services.AddTransient<IUserData, UserData>();
-builder.Services.AddTransient<ISessionData, SessionData>();
-builder.Services.AddTransient<IParticipationData, ParticipationData>();
-builder.Services.AddTransient<IPickData, PickData>();
+
 
 var app = builder.Build();
 

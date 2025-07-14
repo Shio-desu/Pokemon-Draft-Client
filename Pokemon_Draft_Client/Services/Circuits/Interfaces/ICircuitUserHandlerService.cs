@@ -6,8 +6,8 @@ namespace Pokemon_Draft_Client.Services.Circuits.Interfaces;
 
 public interface ICircuitUserHandlerService
 {
-    ConcurrentDictionary<int, UserCircuits> UserCircuitsMap { get; }
+    ConcurrentDictionary<string, UserCircuits> UserCircuitsMap { get; }
     static event EventHandler? UserCircuitsChanged;
-    void Connect(int userId, string circuitId);
-    void Disconnect(int userId, string circuitId);
+    void Connect(string username, string circuitId);
+    void Disconnect(string username, string circuitId);
 }
