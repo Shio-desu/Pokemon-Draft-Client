@@ -11,6 +11,7 @@
 @inject IPickData PickData
 @inject ILobbyUserHandlerService LobbyUserHandlerService
 @inject CircuitHandler CircuitHandler
+@inject NavigationManager NavigationManager
 
 <PageTitle>Pokemon Draft</PageTitle>
 
@@ -21,23 +22,32 @@
 <div>
     List of open Lobbies:
     <div>
-        @foreach (var lobbyUsers in LobbyUserHandlerService.LobbyUsersMap.Values)
-        {
-            <div>
-                @lobbyUsers.Session.SessionName
-                <div>
-                    @foreach (var users in lobbyUsers.Usernames)
-                    {
-                        @users
-                    }
-                </div>
-            </div>
-        }
+        <table class="table-bordered">
+            <thead>
+                <td>Lobby Name</td>
+                <td>Draft Type</td>
+                <td>Participants</td>
+            </thead>
+            @foreach (var lobby in LobbyUserHandlerService.LobbyUsersMap.Values)
+            {
+                <tr>
+                    <td>@lobby.Session.SessionName</td>
+                    <td>@lobby.Session.SessionType</td>
+                    <td>
+                        @foreach (var users in lobby.Usernames)
+                        {
+                            @users
+                        }
+                    </td>
+                    <td><button @onclick="() => OnJoinSession(lobby.Session.SessionId)">Join</button></td>
+                </tr>
+            }
+        </table>
     </div>
 </div>
 <div>
     <div>
-        <EditForm Model="@Session" OnValidSubmit="OnSubmitSession" FormName="SessionForm">
+        <EditForm Model="@Session" OnValidSubmit="OnSubmitCreateSession" FormName="SessionForm">
             <DataAnnotationsValidator/>
             <div>
                 <label>Lobby Name</label>
@@ -66,25 +76,42 @@
 
 
 @code {
-    
+
     [SupplyParameterFromForm]
     SessionModel Session { get; set; } = new()
     {
         // setting default session type
         SessionType = LobbyType.Default
     };
-    
+
     private string? errorMessage;
-    private CircuitHandlerService _circuitHandlerService;
-    
+    private CircuitHandlerService? _circuitHandlerService;
+
     protected override Task OnInitializedAsync()
     {
-        _circuitHandlerService  = (CircuitHandlerService)CircuitHandler;
+        _circuitHandlerService = (CircuitHandlerService)CircuitHandler;
         return Task.CompletedTask;
     }
-    
-    private async Task OnSubmitSession()
+
+    private async Task OnSubmitCreateSession()
     {
-        await LobbyUserHandlerService.CreateLobby(Session.SessionName, Session.SessionType, _circuitHandlerService.Username);
+        if (_circuitHandlerService == null)
+        {
+            throw new NullReferenceException("CircuitHandlerService was not initialized in CreateLobby.razor");
+        }
+
+        int sessionId = await LobbyUserHandlerService.CreateLobby(Session.SessionName, Session.SessionType, _circuitHandlerService.Username);
+        NavigationManager.NavigateTo($"/draft/openlobby/{sessionId}");
     }
+
+    private async Task OnJoinSession(int sessionId)
+    {
+        if (_circuitHandlerService == null)
+        {
+            throw new NullReferenceException("CircuitHandlerService was not initialized in CreateLobby.razor");
+        }
+        await LobbyUserHandlerService.Join(sessionId, _circuitHandlerService.Username);
+        NavigationManager.NavigateTo($"/draft/openlobby/{sessionId}");
+    }
+
 }

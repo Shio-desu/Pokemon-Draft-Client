@@ -1,0 +1,69 @@
+﻿@page "/draft/openlobby/{LobbyIdParam}"
+@using DataAccessLibrary
+@using DataAccessLibrary.Interfaces
+@using DataAccessLibrary.Models
+@using Microsoft.AspNetCore.Authorization
+@using Pokemon_Draft_Client.Models.ViewModels
+@using Pokemon_Draft_Client.Services.Circuits
+@rendermode InteractiveServer
+@attribute [Authorize(Roles= "Administrator,User")]
+@inject ISessionData SessionData
+@inject IParticipationData ParticipationData
+@inject IPickData PickData
+@inject ILobbyUserHandlerService LobbyUserHandlerService
+@inject CircuitHandler CircuitHandler
+
+<PageTitle>Pokemon Draft</PageTitle>
+
+<h1>Draft</h1>
+
+<p>This component is for creating or joining a lobby.</p>
+
+<div>
+    List of open Lobbies:
+    <div>
+        <table class="table-bordered">
+            <thead>
+                <td>Lobby Name</td>
+                <td>Draft Type</td>
+                <td>Participants</td>
+            </thead>
+            <tr>
+                <td>@LobbyUserHandlerService.LobbyUsersMap[_lobbyId].Session.SessionName</td>
+                <td>@LobbyUserHandlerService.LobbyUsersMap[_lobbyId].Session.SessionType</td>
+                <td>
+                    @foreach (var users in @LobbyUserHandlerService.LobbyUsersMap[_lobbyId].Usernames)
+                    {
+                        @users
+                    }
+                </td>
+            </tr>
+            
+        </table>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public required string LobbyIdParam { get; set; }
+
+    private int _lobbyId;
+    private string? errorMessage;
+    private CircuitHandlerService? _circuitHandlerService;
+    
+    protected override Task OnInitializedAsync()
+    {
+        try
+        {
+            _lobbyId = Int32.Parse(LobbyIdParam);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+        _circuitHandlerService  = (CircuitHandlerService)CircuitHandler;
+        return Task.CompletedTask;
+    }
+    
+}

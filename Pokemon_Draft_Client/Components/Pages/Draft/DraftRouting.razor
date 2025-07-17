@@ -5,15 +5,14 @@
 @attribute [Authorize(Roles= "Administrator,User")]
 @inject ILobbyUserHandlerService LobbyUserHandlerService
 @inject CircuitHandler CircuitHandlerService
-@inject IHttpContextAccessor HttpContextAccessor
-<h3>Draft Rerouting based on if the user is already in a lobby and if the lobby has started</h3>
+@inject NavigationManager NavigationManager
+<!-- Draft Rerouting based on if the user is already in a lobby and if the lobby has started -->
 
 @code {
     
     protected override void OnInitialized()
     {
-        HttpContextAccessor.HttpContext?.Response.Redirect("/draft/createlobby");
-        base.OnInitialized();
+        NavigationManager.NavigateTo("/draft/createlobby");
     }
 
 }

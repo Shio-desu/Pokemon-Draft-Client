@@ -26,10 +26,10 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
         CircuitUserHandlerService.UserCircuitsChanged += HandleUserCircuitsChanged;
     }
     
-    public async Task CreateLobby(string lobbyName, LobbyType lobbyType, string username)
+    public async Task<int> CreateLobby(string lobbyName, LobbyType lobbyType, string username)
     {
         if (username.Equals(string.Empty)) 
-            return;
+            throw new ArgumentException("Username cannot be empty");
         
         var users = await _userData.GetUsers();
         var userId = users.Find(user => user.Username == username)?.UserId ?? -1;
@@ -58,6 +58,7 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
         };
         
         OnLobbyUsersChanged();
+        return session.SessionId;
     }
     
     public async Task Join(int lobbyId, string username)
