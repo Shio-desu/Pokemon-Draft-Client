@@ -6,6 +6,14 @@ using Pokemon_Draft_Client.Services.Circuits.Interfaces;
 
 namespace Pokemon_Draft_Client.Services.Circuits;
 
+public static class ConnectionStates
+{
+    public const string Connected = "Connected";
+    public const string Disconnected = "Disconnected";
+    public const int AmountOfReconnectTries = 30;
+    public const int ReconnectPollingTimerMSeconds = 1 * 1000;
+}
+
 public class LobbyUserHandlerService : ILobbyUserHandlerService
 {
     public Dictionary<int, LobbyUsers> LobbyUsersMap { get; private set; } = new();
@@ -54,7 +62,7 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
         LobbyUsersMap[session.SessionId] = new LobbyUsers
         {
             Session = session,
-            Usernames = [username]
+            Users = {[username] = ConnectionStates.Connected}
         };
         
         OnLobbyUsersChanged();
@@ -79,7 +87,7 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
                 UserId = userId
             };
             var participation = await _participationData.PostParticipation(newParticipation);
-            LobbyUsersMap[lobbyId].Usernames.Add(username);
+            LobbyUsersMap[lobbyId].Users[username] = ConnectionStates.Connected;
             OnLobbyUsersChanged();
         }
     }
@@ -94,7 +102,7 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
         if (userId == -1)
             throw new Exception("User not found in database");
         
-        LobbyUsersMap[lobbyId].Usernames.Remove(username);
+        LobbyUsersMap[lobbyId].Users.Remove(username, out _);
         ParticipationModel participationToDelete = new()
         {
             SessionId = lobbyId,
@@ -103,7 +111,7 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
         await _participationData.DeleteParticipation(participationToDelete);
         OnLobbyUsersChanged();
         
-        if (LobbyUsersMap[lobbyId].Usernames.Count != 0) 
+        if (LobbyUsersMap[lobbyId].Users.Count != 0) 
             return;
         
         // deletes the lobby when the last user has left
@@ -115,6 +123,22 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
         await _sessionData.DeleteSession(sessionToDelete);
     }
 
+    // waits for the user to reconnect before removing from the lobby
+    private async Task RemoveUserAfterDelay(string username, int lobbyId)
+    {
+        LobbyUsersMap[lobbyId].Users[username] = ConnectionStates.Disconnected;
+        
+        for (int i = 0; i < ConnectionStates.AmountOfReconnectTries; i++)
+        {
+            await Task.Delay(ConnectionStates.ReconnectPollingTimerMSeconds);
+            if (!_circuitUserHandlerService.UserCircuitsMap.ContainsKey(username)) continue;
+            LobbyUsersMap[lobbyId].Users[username] = ConnectionStates.Connected;
+            return;
+        }
+        
+        await Leave(lobbyId, username);
+    }
+    
     private void HandleUserCircuitsChanged(object? sender, string username)
     {
         if (username.Equals(string.Empty))
@@ -124,8 +148,8 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
         {
             foreach (var lobbyId in LobbyUsersMap.Keys)
             {
-                if (!LobbyUsersMap[lobbyId].Usernames.Contains(username)) continue;
-                _ = Leave(lobbyId, username);
+                if (!LobbyUsersMap[lobbyId].Users.ContainsKey(username)) continue;
+                _ = RemoveUserAfterDelay(username, lobbyId);
                 OnLobbyUsersChanged();
                 return;
             }

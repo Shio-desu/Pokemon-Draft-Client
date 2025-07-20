@@ -32,7 +32,7 @@
                 <td>@LobbyUserHandlerService.LobbyUsersMap[_lobbyId].Session.SessionName</td>
                 <td>@LobbyUserHandlerService.LobbyUsersMap[_lobbyId].Session.SessionType</td>
                 <td>
-                    @foreach (var users in @LobbyUserHandlerService.LobbyUsersMap[_lobbyId].Usernames)
+                    @foreach (var users in @LobbyUserHandlerService.LobbyUsersMap[_lobbyId].Users)
                     {
                         @users
                     }
