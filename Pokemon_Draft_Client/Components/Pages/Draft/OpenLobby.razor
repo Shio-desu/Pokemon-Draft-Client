@@ -12,6 +12,7 @@
 @inject IPickData PickData
 @inject ILobbyUserHandlerService LobbyUserHandlerService
 @inject CircuitHandler CircuitHandler
+@inject NavigationManager NavigationManager
 
 <PageTitle>Pokemon Draft</PageTitle>
 
@@ -56,10 +57,12 @@
         try
         {
             _lobbyId = Int32.Parse(LobbyIdParam);
+            _ = LobbyUserHandlerService.LobbyUsersMap[_lobbyId];
         }
         catch (Exception e)
         {
             Console.WriteLine(e);
+            NavigationManager.NavigateTo("/draft/createlobby");
             throw;
         }
         _circuitHandlerService  = (CircuitHandlerService)CircuitHandler;
