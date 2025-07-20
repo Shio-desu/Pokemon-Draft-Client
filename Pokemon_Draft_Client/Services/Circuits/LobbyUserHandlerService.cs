@@ -120,15 +120,13 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
         if (username.Equals(string.Empty))
             return;
         // if the user id is not part of the user circuits anymore, ergo closed the session / logged out
-        if (!_circuitUserHandlerService.UserCircuitsMap.ContainsKey(username))
+        if (_circuitUserHandlerService.UserConnectionStatesMap.ContainsKey(username)) return;
+        foreach (var lobbyId in LobbyUsersMap.Keys)
         {
-            foreach (var lobbyId in LobbyUsersMap.Keys)
-            {
-                if (!LobbyUsersMap[lobbyId].Usernames.Contains(username)) continue;
-                _ = Leave(lobbyId, username);
-                OnLobbyUsersChanged();
-                return;
-            }
+            if (!LobbyUsersMap[lobbyId].Usernames.Contains(username)) continue;
+            _ = Leave(lobbyId, username);
+            OnLobbyUsersChanged();
+            return;
         }
     }
     
