@@ -60,13 +60,13 @@
     
     private async Task OnSubmitAccount()
     {
-        //TODO: Login authentication with a DB or something
         if (RegisterView.Username == null)
         {
             errorMessage = "Please input a Username.";
             return;
         }
 
+        // TODO: transfer the user fetching and comparing to a server-side script, and reduce the select with a condition for the username to not fetch all users
         if (RegisterView.Password == null)
         {
             errorMessage = "Please input a Password.";

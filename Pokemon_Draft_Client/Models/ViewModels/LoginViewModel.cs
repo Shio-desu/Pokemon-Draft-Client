@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Pokemon;
+namespace Pokemon_Draft_Client.Models.ViewModels;
 
 public class LoginViewModel
 {

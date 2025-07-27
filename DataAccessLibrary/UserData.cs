@@ -24,6 +24,17 @@ namespace DataAccessLibrary
             return db.LoadData<UserModel, dynamic>(sql, new { });
         }
 
+        public Task<List<UserModel>> GetUserByName(string username)
+        {
+            string sql = $"select {_userIdColumnString} as UserId," +
+                         $" {_usernameColumnString} as Username," +
+                         $" {_passhashColumnString} as Passhash," +
+                         $" {_saltColumnString} as Salt," +
+                         $" {_isAdminColumnString} as isAdmin from users" +
+                         $" where username = '{username}';";
+            return db.LoadData<UserModel, dynamic>(sql, new { });
+        }
+        
         public Task<UserModel> PostUser(UserModel user)
         {
             string sql =

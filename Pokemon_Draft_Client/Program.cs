@@ -4,6 +4,9 @@ using DataAccessLibrary;
 using DataAccessLibrary.Interfaces;
 using Pokemon_Draft_Client;
 using Pokemon_Draft_Client.Components;
+using Pokemon_Draft_Client.Services;
+using Pokemon_Draft_Client.Services.Authentication;
+using Pokemon_Draft_Client.Services.Authentication.Interfaces;
 using Pokemon_Draft_Client.Services.Circuits;
 using Pokemon_Draft_Client.Services.Circuits.Interfaces;
 
@@ -37,6 +40,7 @@ builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 builder.Services.AddSingleton<ICircuitUserHandlerService, CircuitUserHandlerService>();
 builder.Services.AddSingleton<ILobbyUserHandlerService, LobbyUserHandlerService>();
 builder.Services.AddScoped<CircuitHandler, CircuitHandlerService>();
+builder.Services.AddScoped<ILoginService, LoginService>();
 
 /*
     // add Session to the WebApp 
