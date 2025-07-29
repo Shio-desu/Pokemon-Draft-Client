@@ -1,17 +1,29 @@
-﻿@page "/draft"
+﻿@page "/draftrouting"
 @using DataAccessLibrary.Interfaces
 @using Pokemon_Draft_Client.Services.Circuits
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(Roles= "Administrator,User")]
 @inject ILobbyUserHandlerService LobbyUserHandlerService
-@inject CircuitHandler CircuitHandlerService
+@inject CircuitHandler CircuitHandler
+@inject ISessionData SessionData
 @inject NavigationManager NavigationManager
 <!-- Draft Rerouting based on if the user is already in a lobby and if the lobby has started -->
 
 @code {
+    private CircuitHandlerService? _circuitHandlerService;
     
     protected override void OnInitialized()
     {
+        _circuitHandlerService = (CircuitHandlerService)CircuitHandler;
+        var username = _circuitHandlerService.Username;
+        
+        var lobby = LobbyUserHandlerService.LobbyUsersMap.Values.FirstOrDefault(lobby => lobby.Users.ContainsKey(username));
+        if (lobby != null)
+        {
+            NavigationManager.NavigateTo(lobby.Session.HasStarted ? $"/draft/draft/{lobby.Session.SessionId}" : $"/draft/openlobby/{lobby.Session.SessionId}");
+            return; 
+        }
+        
         NavigationManager.NavigateTo("/draft/createlobby");
     }
 

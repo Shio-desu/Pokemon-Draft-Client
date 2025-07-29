@@ -6,20 +6,14 @@ using Pokemon_Draft_Client.Services.Circuits.Interfaces;
 
 namespace Pokemon_Draft_Client.Services.Circuits;
 
-public static class ConnectionStates
-{
-    public const string Connected = "Connected";
-    public const string Disconnected = "Disconnected";
-    public const int AmountOfReconnectTries = 30;
-    public const int ReconnectPollingTimerMSeconds = 1 * 1000;
-}
-
 public class LobbyUserHandlerService : ILobbyUserHandlerService
 {
     public Dictionary<int, LobbyUsers> LobbyUsersMap { get; private set; } = new();
-    public static event EventHandler? LobbyUsersChanged;
-    void OnLobbyUsersChanged() => LobbyUsersChanged?.Invoke(this, EventArgs.Empty);
+    public event EventHandler<int>? LobbyUsersChanged;
+    void OnLobbyUsersChanged(int lobbyId) => LobbyUsersChanged?.Invoke(this, lobbyId);
 
+    private const int AmountOfReconnectTries = 30;
+    private const int ReconnectPollingTimerMSeconds = 1 * 1000;
     private readonly ISessionData _sessionData;
     private readonly IParticipationData _participationData;
     private readonly IUserData _userData;
@@ -58,14 +52,22 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
             UserId = userId
         };
         var participation = await _participationData.PostParticipation(newParticipation);
+
+        var creator = new User
+        {
+            Username = username,
+            IsConnected = true,
+            IsOwner = true,
+            IsReady = false
+        };
         
         LobbyUsersMap[session.SessionId] = new LobbyUsers
         {
             Session = session,
-            Users = {[username] = ConnectionStates.Connected}
+            Users = {[username] = creator}
         };
         
-        OnLobbyUsersChanged();
+        OnLobbyUsersChanged(session.SessionId);
         return session.SessionId;
     }
     
@@ -79,16 +81,28 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
         if (userId == -1)
             throw new Exception("User not found in database");
         
-        if (LobbyUsersMap.ContainsKey(lobbyId))
+        if (LobbyUsersMap.TryGetValue(lobbyId, out var value))
         {
+            if (LobbyUsersMap[lobbyId].Users.ContainsKey(username)) 
+                return;
+            
             ParticipationModel newParticipation = new()
             {
                 SessionId = lobbyId,
                 UserId = userId
             };
-            var participation = await _participationData.PostParticipation(newParticipation);
-            LobbyUsersMap[lobbyId].Users[username] = ConnectionStates.Connected;
-            OnLobbyUsersChanged();
+            
+            await _participationData.PostParticipation(newParticipation);
+            
+            var user = new User
+            {
+                Username = username,
+                IsConnected = true,
+                IsOwner = false,
+                IsReady = false
+            };
+            value.Users[username] = user;
+            OnLobbyUsersChanged(lobbyId);
         }
     }
 
@@ -102,14 +116,14 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
         if (userId == -1)
             throw new Exception("User not found in database");
         
-        LobbyUsersMap[lobbyId].Users.Remove(username, out _);
+        LobbyUsersMap[lobbyId].Users.TryRemove(username, out _);
         ParticipationModel participationToDelete = new()
         {
             SessionId = lobbyId,
             UserId = userId
         };
         await _participationData.DeleteParticipation(participationToDelete);
-        OnLobbyUsersChanged();
+        OnLobbyUsersChanged(lobbyId);
         
         if (LobbyUsersMap[lobbyId].Users.Count != 0) 
             return;
@@ -126,13 +140,13 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
     // waits for the user to reconnect before removing from the lobby
     private async Task RemoveUserAfterDelay(string username, int lobbyId)
     {
-        LobbyUsersMap[lobbyId].Users[username] = ConnectionStates.Disconnected;
+        LobbyUsersMap[lobbyId].Users[username].IsConnected = false;
         
-        for (int i = 0; i < ConnectionStates.AmountOfReconnectTries; i++)
+        for (int i = 0; i < AmountOfReconnectTries; i++)
         {
-            await Task.Delay(ConnectionStates.ReconnectPollingTimerMSeconds);
+            await Task.Delay(ReconnectPollingTimerMSeconds);
             if (!_circuitUserHandlerService.UserCircuitsMap.ContainsKey(username)) continue;
-            LobbyUsersMap[lobbyId].Users[username] = ConnectionStates.Connected;
+            LobbyUsersMap[lobbyId].Users[username].IsConnected = true;
             return;
         }
         
@@ -150,7 +164,6 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
             {
                 if (!LobbyUsersMap[lobbyId].Users.ContainsKey(username)) continue;
                 _ = RemoveUserAfterDelay(username, lobbyId);
-                OnLobbyUsersChanged();
                 return;
             }
         }

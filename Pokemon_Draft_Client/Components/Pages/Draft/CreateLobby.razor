@@ -34,9 +34,9 @@
                     <td>@lobby.Session.SessionName</td>
                     <td>@lobby.Session.SessionType</td>
                     <td>
-                        @foreach (var users in lobby.Users)
+                        @foreach (var user in lobby.Users.Values)
                         {
-                            @users
+                            @user.Username
                         }
                     </td>
                     <td><button @onclick="() => OnJoinSession(lobby.Session.SessionId)">Join</button></td>
