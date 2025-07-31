@@ -141,12 +141,13 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
     private async Task RemoveUserAfterDelay(string username, int lobbyId)
     {
         LobbyUsersMap[lobbyId].Users[username].IsConnected = false;
-        
+        OnLobbyUsersChanged(lobbyId);
         for (int i = 0; i < AmountOfReconnectTries; i++)
         {
             await Task.Delay(ReconnectPollingTimerMSeconds);
             if (!_circuitUserHandlerService.UserCircuitsMap.ContainsKey(username)) continue;
             LobbyUsersMap[lobbyId].Users[username].IsConnected = true;
+            OnLobbyUsersChanged(lobbyId);
             return;
         }
         

@@ -77,8 +77,9 @@
     {
         if (changedLobbyId != _lobbyId)
             return;
+        InvokeAsync(StateHasChanged);
         // TODO: understand render stuff
-        
+
         //NavigationManager.NavigateTo($"/draft/openlobby/{_lobbyId}", true);
     }
     
