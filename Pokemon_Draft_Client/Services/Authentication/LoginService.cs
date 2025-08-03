@@ -3,6 +3,7 @@ using DataAccessLibrary.Interfaces;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Pokemon_Draft_Client.Services.Authentication.Interfaces;
+using Pokemon_Draft_Client.Services.Circuits;
 
 namespace Pokemon_Draft_Client.Services.Authentication;
 
@@ -13,8 +14,11 @@ public struct AuthenticationResult
     public string Username;
 }
 
-public class LoginService(IUserData userData, IHttpContextAccessor httpContextAccessor) : ILoginService
+public class LoginService(IUserData userData, IHttpContextAccessor httpContextAccessor, CircuitHandler circuitHandler) : ILoginService
 {
+    private readonly CircuitHandlerService _circuitHandlerService = (CircuitHandlerService)circuitHandler;
+    private readonly HttpContext _httpContext = httpContextAccessor.HttpContext ?? throw new ArgumentNullException("httpContextAccessor.HttpContext");
+
     public async Task<AuthenticationResult> Authenticate(string? username, string? password)
     {
         var result = new AuthenticationResult
@@ -61,15 +65,19 @@ public class LoginService(IUserData userData, IHttpContextAccessor httpContextAc
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         var principal = new ClaimsPrincipal(identity);
         
-        if (httpContextAccessor.HttpContext == null)
-        {
-            result.ErrorMessage = "HttpContext is null";
-            return result;
-        }
-        
-        await httpContextAccessor.HttpContext.SignInAsync(principal);
+        await _httpContext.SignInAsync(principal);
+        _circuitHandlerService.ChangeUsername(result.Username);
         
         result.LoginSuccessful = true;
         return result;
+    }
+
+    public async Task Logout()
+    {
+        if (_httpContext is { User.Identity.IsAuthenticated: true })
+        {
+            await _httpContext.SignOutAsync();
+            _circuitHandlerService.ChangeUsername(string.Empty);
+        }
     }
 }

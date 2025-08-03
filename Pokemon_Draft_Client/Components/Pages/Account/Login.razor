@@ -5,7 +5,6 @@
 @using Pokemon
 @inject NavigationManager NavigationManager
 @inject IAuthenticationService LoginService
-@inject CircuitHandler CircuitHandler
 
 <PageTitle>Login</PageTitle>
 
@@ -41,29 +40,23 @@
 </div>
 
 @code {
-    [CascadingParameter]
-    public required HttpContext HttpContext { get; set; }
-    
+  
     [SupplyParameterFromForm]
     public LoginViewModel LoginView { get; set; } = new();
 
     private string? _errorMessage;
-    private CircuitHandlerService? _circuitHandlerService;
     
     protected override Task OnInitializedAsync()
     {
-        _circuitHandlerService = (CircuitHandlerService)CircuitHandler;
         return Task.CompletedTask;
     }
     
     private async Task OnSubmitLogin()
     {
-
         var result = await LoginService.Authenticate(LoginView.Username, LoginView.Password);
 
         if (result.LoginSuccessful)
         {
-            _circuitHandlerService?.ChangeUsername(result.Username);
             NavigationManager.NavigateTo("/");
         }
         else

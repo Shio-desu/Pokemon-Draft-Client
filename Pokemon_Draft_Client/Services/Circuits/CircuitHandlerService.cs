@@ -13,7 +13,7 @@ public class UsernameEventArgs(string newUsername, string oldUsername) : EventAr
 public class CircuitHandlerService(IHttpContextAccessor httpContextAccessor, ICircuitUserHandlerService circuitUserHandlerService) : CircuitHandler
 {
     public string CircuitId { get; private set; } = string.Empty;
-    public string Username { get; private set; } = string.Empty;
+    public string Username { get; private set; } = httpContextAccessor.HttpContext?.User.Identity?.Name ?? string.Empty;
     public static event EventHandler<UsernameEventArgs>? UsernameChanged;
     void OnUsernameChanged(string oldUsername, string newUsername) => UsernameChanged?.Invoke(this, new UsernameEventArgs(newUsername, oldUsername));
 

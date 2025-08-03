@@ -3,4 +3,5 @@
 public interface ILoginService
 {
     Task<AuthenticationResult> Authenticate(string? username, string? password);
+    Task Logout();
 }

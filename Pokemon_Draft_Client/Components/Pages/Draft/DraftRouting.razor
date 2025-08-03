@@ -20,7 +20,7 @@
         var lobby = LobbyUserHandlerService.LobbyUsersMap.Values.FirstOrDefault(lobby => lobby.Users.ContainsKey(username));
         if (lobby != null)
         {
-            NavigationManager.NavigateTo(lobby.Session.HasStarted ? $"/draft/draft/{lobby.Session.SessionId}" : $"/draft/openlobby/{lobby.Session.SessionId}");
+            NavigationManager.NavigateTo(lobby.Session.HasStarted ? $"/draft/draft/{lobby.Session.SessionId}" : $"/draft/managelobby/{lobby.Session.SessionId}");
             return; 
         }
         

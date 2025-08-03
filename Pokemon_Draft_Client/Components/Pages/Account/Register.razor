@@ -46,7 +46,7 @@
 
 @code {
     [CascadingParameter]
-    public required HttpContext HttpContext { get; set; }
+    public HttpContext? HttpContext { get; set; }
     
     [SupplyParameterFromForm]
     public RegisterViewModel RegisterView { get; set; } = new();

@@ -1,0 +1,111 @@
+﻿@page "/draft/managelobby/{LobbyIdParam}"
+@using Microsoft.AspNetCore.Authorization
+@using Pokemon_Draft_Client.Components.Layout
+@using Pokemon_Draft_Client.Components.Modals
+@using Pokemon_Draft_Client.Components.Pages.Account
+@using Pokemon_Draft_Client.Models
+@using Pokemon_Draft_Client.Services.Circuits
+@attribute [Authorize(Roles= "Administrator,User")]
+@inject ILobbyUserHandlerService LobbyUserHandlerService
+@inject NavigationManager NavigationManager
+@inject CircuitHandler CircuitHandler
+@rendermode InteractiveServer
+
+<PageTitle>Pokemon Draft</PageTitle>
+
+<h1>Draft</h1>
+
+<p>This component is for creating or joining a lobby.</p>
+
+<div>
+    List of open Lobbies:
+    <div>
+        <table class="table-bordered">
+            <thead>
+                <td>User</td>
+                <td>Connection State</td>
+                <td>Lobby Owner</td>
+                <td>Ready State</td>
+            </thead>
+            @if (_lobbyUsers != null) {
+                foreach (var user in _lobbyUsers.Users.Values)
+                {
+                    <tr>
+                        <td>@user.Username</td>
+                        <td>@(user.IsConnected ? "Connected" : "Disconnected")</td>
+                        <td>@(user.IsOwner ? "Owner" : "Participant")</td>
+                        <td>@(user.IsReady ? "Ready" : "Not Ready")</td>
+                        @if (_lobbyUsers != null && (_lobbyUsers.Users.ContainsKey(_username) && _lobbyUsers.Users[_username].IsOwner) && user.Username != _username)
+                        {
+                            <td><button @onclick="() => KickUser(user.Username)">Kick</button></td> 
+                        }
+                    </tr>
+                }
+            }
+        </table>
+    </div>
+</div>
+@code {
+    [Parameter]
+    public required string LobbyIdParam { get; set; }
+    
+    [CascadingParameter] 
+    public required IModalService Modal { get; set; }
+    
+    private int _lobbyId;
+    private LobbyUsers? _lobbyUsers;
+    private string _username = string.Empty;
+    private CircuitHandlerService _circuitHandlerService;
+
+    protected override Task OnInitializedAsync()
+    {
+        try
+        {
+            _lobbyId = Int32.Parse(LobbyIdParam);
+            _circuitHandlerService = (CircuitHandlerService)CircuitHandler;
+        }
+        catch (Exception)
+        {
+            NavigationManager.NavigateTo("/draft/createlobby");
+            throw;
+        }
+
+        if (!LobbyUserHandlerService.LobbyUsersMap.TryGetValue(_lobbyId, out var lobbyUsers))
+        {
+            NavigationManager.NavigateTo("/draft/createlobby");
+            return Task.CompletedTask;
+        }
+        
+        _lobbyUsers = lobbyUsers;
+        _username = _circuitHandlerService.Username;
+        
+        LobbyUserHandlerService.LobbyUsersChanged += HandleLobbyChanges;
+        return Task.CompletedTask;
+    }
+    
+    private void HandleLobbyChanges(object? sender, int changedLobbyId)
+    {
+        if (changedLobbyId != _lobbyId)
+            return;
+        
+        InvokeAsync(StateHasChanged);
+        
+        if (!LobbyUserHandlerService.LobbyUsersMap.TryGetValue(_lobbyId, out var lobbyUsers) || !lobbyUsers.Users.ContainsKey(_username))
+        {
+            _ = ShowLobbyClosedModal();
+        } 
+    }
+
+    private async Task ShowLobbyClosedModal()
+    {
+        var closedModal = Modal.Show<LobbyClosedModal>("Back to the start");
+        await closedModal.Result;
+        NavigationManager.NavigateTo("/draft/createlobby");
+    }
+
+    private void KickUser(string username)
+    {
+        LobbyUserHandlerService.Leave(_lobbyId, username);
+    }
+
+}

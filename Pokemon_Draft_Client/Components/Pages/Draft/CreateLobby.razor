@@ -101,7 +101,7 @@
         }
 
         int sessionId = await LobbyUserHandlerService.CreateLobby(Session.SessionName, Session.SessionType, _circuitHandlerService.Username);
-        NavigationManager.NavigateTo($"/draft/openlobby/{sessionId}");
+        NavigationManager.NavigateTo($"/draft/managelobby/{sessionId}");
     }
 
     private async Task OnJoinSession(int sessionId)
@@ -111,7 +111,7 @@
             throw new NullReferenceException("CircuitHandlerService was not initialized in CreateLobby.razor");
         }
         await LobbyUserHandlerService.Join(sessionId, _circuitHandlerService.Username);
-        NavigationManager.NavigateTo($"/draft/openlobby/{sessionId}");
+        NavigationManager.NavigateTo($"/draft/managelobby/{sessionId}");
     }
 
 }

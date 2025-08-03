@@ -1,4 +1,5 @@
 global using Microsoft.AspNetCore.Components.Server.Circuits;
+using Blazored.Modal;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using DataAccessLibrary;
 using DataAccessLibrary.Interfaces;
@@ -26,6 +27,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LogoutPath = "/logout";
         options.AccessDeniedPath = "/accessdenied";
     });
+
+builder.Services.AddBlazoredModal();
 
 // Add Database-Services
 builder.Services.AddTransient<ISqlDataAccess, SqlDataAccess>();
