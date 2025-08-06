@@ -22,10 +22,10 @@
     <div>
         <table class="table-bordered">
             <thead>
-                <td>User</td>
-                <td>Connection State</td>
-                <td>Lobby Owner</td>
-                <td>Ready State</td>
+            <td>User</td>
+            <td>Connection State</td>
+            <td>Lobby Owner</td>
+            <td>Ready State</td>
             </thead>
             @if (_lobbyUsers != null) {
                 foreach (var user in _lobbyUsers.Users.Values)
@@ -45,6 +45,16 @@
         </table>
     </div>
 </div>
+<button @onclick="ChangeReadyState">
+    @if (_user is { IsReady: true })
+    {
+        <span>Unready</span>
+    }
+    else
+    {
+        <span>Ready</span>
+    }
+</button>
 @code {
     [Parameter]
     public required string LobbyIdParam { get; set; }
@@ -55,6 +65,7 @@
     private int _lobbyId;
     private LobbyUsers? _lobbyUsers;
     private string _username = string.Empty;
+    private User? _user;
     private CircuitHandlerService _circuitHandlerService;
 
     protected override Task OnInitializedAsync()
@@ -78,6 +89,7 @@
         
         _lobbyUsers = lobbyUsers;
         _username = _circuitHandlerService.Username;
+        _lobbyUsers.Users.TryGetValue(_username, out _user);
         
         LobbyUserHandlerService.LobbyUsersChanged += HandleLobbyChanges;
         return Task.CompletedTask;
@@ -108,4 +120,8 @@
         LobbyUserHandlerService.Leave(_lobbyId, username);
     }
 
+    private void ChangeReadyState()
+    {
+        LobbyUserHandlerService.ChangeReadyStateOfUser(_lobbyId, _username);
+    }
 }

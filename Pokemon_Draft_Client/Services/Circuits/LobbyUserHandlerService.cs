@@ -162,10 +162,21 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
         OnLobbyUsersChanged(lobbyId);
     }
 
+    public void ChangeReadyStateOfUser(int lobbyId, string username)
+    {
+        LobbyUsersMap.TryGetValue(lobbyId, out var lobbyUsers);
+        if (lobbyUsers is null) return;
+        lobbyUsers.Users.TryGetValue(username, out var user);
+        if (user is null) return;
+        user.IsReady = !user.IsReady;
+        OnLobbyUsersChanged(lobbyId);
+    }
+    
     // waits for the user to reconnect before removing from the lobby
     private async Task RemoveUserAfterDelay(string username, int lobbyId)
     {
         LobbyUsersMap[lobbyId].Users[username].IsConnected = false;
+        LobbyUsersMap[lobbyId].Users[username].IsReady = false;
         OnLobbyUsersChanged(lobbyId);
         for (int i = 0; i < AmountOfReconnectTries; i++)
         {

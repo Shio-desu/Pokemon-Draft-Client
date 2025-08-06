@@ -10,4 +10,5 @@ public interface ILobbyUserHandlerService
     Task<int> CreateLobby(string lobbyName, LobbyType lobbyType, string username);
     Task Join(int lobbyId, string username);
     Task Leave(int lobbyId, string username);
+    void ChangeReadyStateOfUser(int lobbyId, string username);
 }
