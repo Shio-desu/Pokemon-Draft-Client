@@ -15,6 +15,6 @@ public class User
 public class LobbyUsers
 {
     public required SessionModel Session { get; set; }
-    public ConcurrentDictionary<string, User> Users { get; set; } = [];
+    public ConcurrentDictionary<string, User> UsersDict { get; set; } = [];
 }
 

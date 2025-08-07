@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using DataAccessLibrary.Interfaces;
@@ -26,10 +27,40 @@ namespace DataAccessLibrary
             return db.LoadData<SessionModel, dynamic>(sql, new { });
         }
 
+        public Task<List<SessionModel>> GetSessionById(int sessionId)
+        {
+            string sql = $"select {_sessionIdColumnString} as SessionId," +
+                         $"{_startDateColumnString} as StartDate," +
+                         $"{_endDateColumnString} as EndDate," +
+                         $"{_sessionNameColumnString} as SessionName," +
+                         $"{_sessionTypeColumnString} as SessionType," +
+                         $"{_hasStartedColumnString} as hasStarted from sessions " +
+                         $"where session_id = {sessionId};";
+            return db.LoadData<SessionModel, dynamic>(sql, new { });
+        }
+
         public Task<SessionModel> PostSession(SessionModel session)
         {
             string sql = $"insert into sessions ({_startDateColumnString}, {_endDateColumnString}, {_sessionNameColumnString}, {_sessionTypeColumnString}, {_hasStartedColumnString}) " +
                          "values (@StartDate, @EndDate, @SessionName, @SessionType, @HasStarted) " +
+                         $"returning {_sessionIdColumnString} as SessionId," +
+                         $"{_startDateColumnString} as StartDate," +
+                         $"{_endDateColumnString} as EndDate," +
+                         $"{_sessionNameColumnString} as SessionName," +
+                         $"{_sessionTypeColumnString} as SessionType," +
+                         $"{_hasStartedColumnString} as hasStarted;";
+            return db.SaveDataReturnObject(sql, session);
+        }
+
+        public Task<SessionModel> UpdateSession(SessionModel session)
+        {
+            string sql = $"update sessions " +
+                         $"set {_startDateColumnString} = @StartDate, " +
+                         $"{_endDateColumnString} = @EndDate, " +
+                         $"{_sessionNameColumnString} = @SessionName, " +
+                         $"{_sessionTypeColumnString} = @SessionType, " +
+                         $"{_hasStartedColumnString} = @HasStarted " +
+                         $"where {_sessionIdColumnString} = @SessionId " +
                          $"returning {_sessionIdColumnString} as SessionId," +
                          $"{_startDateColumnString} as StartDate," +
                          $"{_endDateColumnString} as EndDate," +

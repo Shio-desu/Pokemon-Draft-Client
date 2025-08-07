@@ -6,9 +6,6 @@
 @using Pokemon_Draft_Client.Services.Circuits
 @rendermode InteractiveServer
 @attribute [Authorize(Roles= "Administrator,User")]
-@inject ISessionData SessionData
-@inject IParticipationData ParticipationData
-@inject IPickData PickData
 @inject ILobbyUserHandlerService LobbyUserHandlerService
 @inject CircuitHandler CircuitHandler
 @inject NavigationManager NavigationManager
@@ -34,7 +31,7 @@
                     <td>@lobby.Session.SessionName</td>
                     <td>@lobby.Session.SessionType</td>
                     <td>
-                        @foreach (var user in lobby.Users.Values)
+                        @foreach (var user in lobby.UsersDict.Values)
                         {
                             @user.Username
                         }

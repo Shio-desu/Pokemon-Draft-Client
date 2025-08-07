@@ -8,6 +8,11 @@
 @inject ISessionData SessionData
 @inject NavigationManager NavigationManager
 <!-- Draft Rerouting based on if the user is already in a lobby and if the lobby has started -->
+<h2>Rerouting...</h2>
+<h4>
+    if you have time to read this, something probably went wrong.
+    Try checking your internet connection or refreshing the page.
+</h4>
 
 @code {
     private CircuitHandlerService? _circuitHandlerService;
@@ -17,14 +22,15 @@
         _circuitHandlerService = (CircuitHandlerService)CircuitHandler;
         var username = _circuitHandlerService.Username;
         
-        var lobby = LobbyUserHandlerService.LobbyUsersMap.Values.FirstOrDefault(lobby => lobby.Users.ContainsKey(username));
-        if (lobby != null)
+        var lobby = LobbyUserHandlerService.LobbyUsersMap.Values.FirstOrDefault(lobby => lobby.UsersDict.ContainsKey(username));
+        if (lobby == null)
         {
-            NavigationManager.NavigateTo(lobby.Session.HasStarted ? $"/draft/draft/{lobby.Session.SessionId}" : $"/draft/managelobby/{lobby.Session.SessionId}");
+            NavigationManager.NavigateTo("/draft/createlobby");
             return; 
         }
         
-        NavigationManager.NavigateTo("/draft/createlobby");
+        NavigationManager.NavigateTo(lobby.Session.HasStarted ? $"/draft/drafting/{lobby.Session.SessionId}" : $"/draft/managelobby/{lobby.Session.SessionId}");
+        
     }
 
 }

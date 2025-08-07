@@ -64,7 +64,7 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
         LobbyUsersMap[session.SessionId] = new LobbyUsers
         {
             Session = session,
-            Users = {[username] = creator}
+            UsersDict = {[username] = creator}
         };
         
         OnLobbyUsersChanged(session.SessionId);
@@ -83,7 +83,7 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
         
         if (LobbyUsersMap.TryGetValue(lobbyId, out var value))
         {
-            if (LobbyUsersMap[lobbyId].Users.ContainsKey(username)) 
+            if (LobbyUsersMap[lobbyId].UsersDict.ContainsKey(username)) 
                 return;
             
             ParticipationModel newParticipation = new()
@@ -101,7 +101,7 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
                 IsOwner = false,
                 IsReady = false
             };
-            value.Users[username] = user;
+            value.UsersDict[username] = user;
             OnLobbyUsersChanged(lobbyId);
         }
     }
@@ -114,15 +114,15 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
         var allUsers = await _userData.GetUsers();
         
         // if lobby owner leaves, remove everyone participating (also from the database) to close the lobby
-        if (LobbyUsersMap[lobbyId].Users[username].IsOwner)
+        if (LobbyUsersMap[lobbyId].UsersDict[username].IsOwner)
         {
-            foreach (var user in LobbyUsersMap[lobbyId].Users.Values)
+            foreach (var user in LobbyUsersMap[lobbyId].UsersDict.Values)
             {
                 var userId = allUsers.Find(userModel => userModel.Username == user.Username)?.UserId ?? -1;
                 if (userId == -1)
                     throw new Exception("User not found in database");
                 
-                LobbyUsersMap[lobbyId].Users.TryRemove(user.Username, out _);
+                LobbyUsersMap[lobbyId].UsersDict.TryRemove(user.Username, out _);
                 ParticipationModel participationToDelete = new()
                 {
                     SessionId = lobbyId,
@@ -137,7 +137,7 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
             if (userId == -1)
                 throw new Exception("User not found in database");
             
-            LobbyUsersMap[lobbyId].Users.TryRemove(username, out _);
+            LobbyUsersMap[lobbyId].UsersDict.TryRemove(username, out _);
             ParticipationModel participationToDelete = new()
             {
                 SessionId = lobbyId,
@@ -146,7 +146,7 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
             await _participationData.DeleteParticipation(participationToDelete);
         }
         
-        if (LobbyUsersMap[lobbyId].Users.Count != 0)
+        if (LobbyUsersMap[lobbyId].UsersDict.Count != 0)
         {
             OnLobbyUsersChanged(lobbyId);
             return;
@@ -162,11 +162,25 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
         OnLobbyUsersChanged(lobbyId);
     }
 
+    public async Task Start(int lobbyId)
+    {
+        var sessionList = await _sessionData.GetSessionById(lobbyId);
+        if (sessionList.Count == 0)
+            throw new Exception("Session you wanted to start doesn't exist the the Database.");
+
+        var session = sessionList[0];
+        session.HasStarted = true;
+        session.StartDate = DateTime.UtcNow;
+        await _sessionData.UpdateSession(session);
+        LobbyUsersMap[lobbyId].Session = session;
+        OnLobbyUsersChanged(lobbyId);
+    }
+
     public void ChangeReadyStateOfUser(int lobbyId, string username)
     {
         LobbyUsersMap.TryGetValue(lobbyId, out var lobbyUsers);
         if (lobbyUsers is null) return;
-        lobbyUsers.Users.TryGetValue(username, out var user);
+        lobbyUsers.UsersDict.TryGetValue(username, out var user);
         if (user is null) return;
         user.IsReady = !user.IsReady;
         OnLobbyUsersChanged(lobbyId);
@@ -175,14 +189,14 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
     // waits for the user to reconnect before removing from the lobby
     private async Task RemoveUserAfterDelay(string username, int lobbyId)
     {
-        LobbyUsersMap[lobbyId].Users[username].IsConnected = false;
-        LobbyUsersMap[lobbyId].Users[username].IsReady = false;
+        LobbyUsersMap[lobbyId].UsersDict[username].IsConnected = false;
+        LobbyUsersMap[lobbyId].UsersDict[username].IsReady = false;
         OnLobbyUsersChanged(lobbyId);
         for (int i = 0; i < AmountOfReconnectTries; i++)
         {
             await Task.Delay(ReconnectPollingTimerMSeconds);
             if (!_circuitUserHandlerService.UserCircuitsMap.ContainsKey(username)) continue;
-            LobbyUsersMap[lobbyId].Users[username].IsConnected = true;
+            LobbyUsersMap[lobbyId].UsersDict[username].IsConnected = true;
             OnLobbyUsersChanged(lobbyId);
             return;
         }
@@ -199,7 +213,7 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
         {
             foreach (var lobbyId in LobbyUsersMap.Keys)
             {
-                if (!LobbyUsersMap[lobbyId].Users.ContainsKey(username)) continue;
+                if (!LobbyUsersMap[lobbyId].UsersDict.ContainsKey(username)) continue;
                 _ = RemoveUserAfterDelay(username, lobbyId);
                 return;
             }

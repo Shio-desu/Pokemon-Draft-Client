@@ -1,14 +1,13 @@
 ﻿@page "/draft/managelobby/{LobbyIdParam}"
-@using Microsoft.AspNetCore.Authorization
-@using Pokemon_Draft_Client.Components.Layout
+@using DataAccessLibrary.Interfaces
 @using Pokemon_Draft_Client.Components.Modals
-@using Pokemon_Draft_Client.Components.Pages.Account
 @using Pokemon_Draft_Client.Models
 @using Pokemon_Draft_Client.Services.Circuits
 @attribute [Authorize(Roles= "Administrator,User")]
 @inject ILobbyUserHandlerService LobbyUserHandlerService
 @inject NavigationManager NavigationManager
 @inject CircuitHandler CircuitHandler
+@inject ISessionData SessionData
 @rendermode InteractiveServer
 
 <PageTitle>Pokemon Draft</PageTitle>
@@ -28,14 +27,14 @@
             <td>Ready State</td>
             </thead>
             @if (_lobbyUsers != null) {
-                foreach (var user in _lobbyUsers.Users.Values)
+                foreach (var user in _lobbyUsers.UsersDict.Values)
                 {
                     <tr>
                         <td>@user.Username</td>
                         <td>@(user.IsConnected ? "Connected" : "Disconnected")</td>
                         <td>@(user.IsOwner ? "Owner" : "Participant")</td>
                         <td>@(user.IsReady ? "Ready" : "Not Ready")</td>
-                        @if (_lobbyUsers != null && (_lobbyUsers.Users.ContainsKey(_username) && _lobbyUsers.Users[_username].IsOwner) && user.Username != _username)
+                        @if (_lobbyUsers != null && (_lobbyUsers.UsersDict.ContainsKey(_username) && _lobbyUsers.UsersDict[_username].IsOwner) && user.Username != _username)
                         {
                             <td><button @onclick="() => KickUser(user.Username)">Kick</button></td> 
                         }
@@ -45,6 +44,7 @@
         </table>
     </div>
 </div>
+
 <button @onclick="ChangeReadyState">
     @if (_user is { IsReady: true })
     {
@@ -55,6 +55,13 @@
         <span>Ready</span>
     }
 </button>
+
+@if (_lobbyUsers is not null && _lobbyUsers.UsersDict[_username].IsOwner) {
+<button id="StartDraftBtn" @onclick="StartDraft" disabled="@_lobbyUsers?.UsersDict.Values.ToList().Exists(user => user.IsReady == false)">
+    Start!
+</button>
+}
+
 @code {
     [Parameter]
     public required string LobbyIdParam { get; set; }
@@ -89,7 +96,7 @@
         
         _lobbyUsers = lobbyUsers;
         _username = _circuitHandlerService.Username;
-        _lobbyUsers.Users.TryGetValue(_username, out _user);
+        _lobbyUsers.UsersDict.TryGetValue(_username, out _user);
         
         LobbyUserHandlerService.LobbyUsersChanged += HandleLobbyChanges;
         return Task.CompletedTask;
@@ -102,10 +109,16 @@
         
         InvokeAsync(StateHasChanged);
         
-        if (!LobbyUserHandlerService.LobbyUsersMap.TryGetValue(_lobbyId, out var lobbyUsers) || !lobbyUsers.Users.ContainsKey(_username))
+        if (!LobbyUserHandlerService.LobbyUsersMap.TryGetValue(_lobbyId, out var lobbyUsers) || !lobbyUsers.UsersDict.ContainsKey(_username))
         {
             _ = ShowLobbyClosedModal();
-        } 
+            return;
+        }
+
+        if (lobbyUsers.Session.HasStarted)
+        {
+            NavigationManager.NavigateTo($"/draft/drafting/{_lobbyId}");
+        }
     }
 
     private async Task ShowLobbyClosedModal()
@@ -123,5 +136,20 @@
     private void ChangeReadyState()
     {
         LobbyUserHandlerService.ChangeReadyStateOfUser(_lobbyId, _username);
+    }
+
+    private async Task StartDraft()
+    {
+        if (_lobbyUsers == null)
+            return;
+        
+        if (!_lobbyUsers.UsersDict[_username].IsOwner)
+            return;
+        
+        if (_lobbyUsers.UsersDict.Values.ToList().Exists(user => user.IsReady == false))
+            return;
+
+        await LobbyUserHandlerService.Start(_lobbyId);
+        NavigationManager.NavigateTo($"/draft/drafting/{_lobbyId}");
     }
 }

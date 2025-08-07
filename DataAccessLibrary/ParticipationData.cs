@@ -14,18 +14,27 @@ namespace DataAccessLibrary
 
         public Task<List<ParticipationModel>> GetParticipations()
         {
-            string sql = $"select {_participationIdColumnString} as ParticipationId," +
-                         $"{_userIdColumnString} as UserId," +
+            string sql = $"select {_participationIdColumnString} as ParticipationId, " +
+                         $"{_userIdColumnString} as UserId, " +
                          $"{_sessionIdColumnString} as SessionId from participations;";
             return db.LoadData<ParticipationModel, dynamic>(sql, new { });
         }
 
+        public Task<List<ParticipationModel>> GetParticipationsFromSession(int sessionId)
+        {
+            string sql = $"select {_participationIdColumnString} as ParticipationId, " +
+                         $"{_userIdColumnString} as UserId, " +
+                         $"{_sessionIdColumnString} as SessionId from participations " +
+                         $"where {_sessionIdColumnString} = {sessionId};";
+            return db.LoadData<ParticipationModel, dynamic>(sql, new { });
+        }
+        
         public Task<ParticipationModel> PostParticipation(ParticipationModel participation)
         {
             string sql = $"insert into participations ({_userIdColumnString}, {_sessionIdColumnString}) " +
                          "values (@UserId, @SessionId) " +
-                         $"returning {_participationIdColumnString} as ParticipationId," +
-                         $"{_userIdColumnString} as UserId," +
+                         $"returning {_participationIdColumnString} as ParticipationId, " +
+                         $"{_userIdColumnString} as UserId, " +
                          $"{_sessionIdColumnString} as SessionId;";
             return db.SaveDataReturnObject(sql, participation);
         }
