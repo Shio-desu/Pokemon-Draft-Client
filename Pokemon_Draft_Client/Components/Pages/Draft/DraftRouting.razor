@@ -1,0 +1,36 @@
+﻿@page "/draftrouting"
+@using DataAccessLibrary.Interfaces
+@using Pokemon_Draft_Client.Services.Circuits
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles= "Administrator,User")]
+@inject ILobbyUserHandlerService LobbyUserHandlerService
+@inject CircuitHandler CircuitHandler
+@inject ISessionData SessionData
+@inject NavigationManager NavigationManager
+<!-- Draft Rerouting based on if the user is already in a lobby and if the lobby has started -->
+<h2>Rerouting...</h2>
+<h4>
+    if you have time to read this, something probably went wrong.
+    Try checking your internet connection or refreshing the page.
+</h4>
+
+@code {
+    private CircuitHandlerService? _circuitHandlerService;
+    
+    protected override void OnInitialized()
+    {
+        _circuitHandlerService = (CircuitHandlerService)CircuitHandler;
+        var username = _circuitHandlerService.Username;
+        
+        var lobby = LobbyUserHandlerService.LobbyUsersMap.Values.FirstOrDefault(lobby => lobby.UsersDict.ContainsKey(username));
+        if (lobby == null)
+        {
+            NavigationManager.NavigateTo("/draft/createlobby");
+            return; 
+        }
+        
+        NavigationManager.NavigateTo(lobby.Session.HasStarted ? $"/draft/drafting/{lobby.Session.SessionId}" : $"/draft/managelobby/{lobby.Session.SessionId}");
+        
+    }
+
+}

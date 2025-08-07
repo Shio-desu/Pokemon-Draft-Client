@@ -2,10 +2,13 @@
 using System.Threading.Tasks;
 using DataAccessLibrary.Models;
 
-namespace DataAccessLibrary;
+namespace DataAccessLibrary.Interfaces;
 
 public interface IParticipationData
 {
     Task<List<ParticipationModel>> GetParticipations();
-    Task PostParticipation(ParticipationModel participation);
+    public Task<List<ParticipationModel>> GetParticipationsFromSession(int sessionId);
+    Task<ParticipationModel> PostParticipation(ParticipationModel participation);
+    Task<int> PostParticipationReturnId(ParticipationModel participation);
+    Task DeleteParticipation(ParticipationModel participation);
 }

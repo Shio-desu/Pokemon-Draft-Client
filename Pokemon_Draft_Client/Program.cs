@@ -1,8 +1,15 @@
+global using Microsoft.AspNetCore.Components.Server.Circuits;
+using Blazored.Modal;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using DataAccessLibrary;
 using DataAccessLibrary.Interfaces;
+using Pokemon_Draft_Client;
 using Pokemon_Draft_Client.Components;
-
+using Pokemon_Draft_Client.Services;
+using Pokemon_Draft_Client.Services.Authentication;
+using Pokemon_Draft_Client.Services.Authentication.Interfaces;
+using Pokemon_Draft_Client.Services.Circuits;
+using Pokemon_Draft_Client.Services.Circuits.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,8 +27,23 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LogoutPath = "/logout";
         options.AccessDeniedPath = "/accessdenied";
     });
+
+builder.Services.AddBlazoredModal();
+
+// Add Database-Services
+builder.Services.AddTransient<ISqlDataAccess, SqlDataAccess>();
+builder.Services.AddTransient<IUserData, UserData>();
+builder.Services.AddTransient<ISessionData, SessionData>();
+builder.Services.AddTransient<IParticipationData, ParticipationData>();
+builder.Services.AddTransient<IPickData, PickData>();
+
 builder.Services.AddAuthorization();
 builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+builder.Services.AddSingleton<ICircuitUserHandlerService, CircuitUserHandlerService>();
+builder.Services.AddSingleton<ILobbyUserHandlerService, LobbyUserHandlerService>();
+builder.Services.AddScoped<CircuitHandler, CircuitHandlerService>();
+builder.Services.AddScoped<ILoginService, LoginService>();
 
 /*
     // add Session to the WebApp 
@@ -35,12 +57,7 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });*/
 
-// Add Database-Services
-builder.Services.AddTransient<ISqlDataAccess, SqlDataAccess>();
-builder.Services.AddTransient<IUserData, UserData>();
-builder.Services.AddTransient<ISessionData, SessionData>();
-builder.Services.AddTransient<IParticipationData, ParticipationData>();
-builder.Services.AddTransient<IPickData, PickData>();
+
 
 var app = builder.Build();
 
@@ -56,9 +73,9 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 //app.UseSession();
-app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseAntiforgery();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()

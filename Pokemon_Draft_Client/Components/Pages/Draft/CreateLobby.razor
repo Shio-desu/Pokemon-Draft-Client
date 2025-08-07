@@ -1,0 +1,114 @@
+﻿@page "/draft/createlobby"
+@using DataAccessLibrary
+@using DataAccessLibrary.Interfaces
+@using DataAccessLibrary.Models
+@using Microsoft.AspNetCore.Authorization
+@using Pokemon_Draft_Client.Services.Circuits
+@rendermode InteractiveServer
+@attribute [Authorize(Roles= "Administrator,User")]
+@inject ILobbyUserHandlerService LobbyUserHandlerService
+@inject CircuitHandler CircuitHandler
+@inject NavigationManager NavigationManager
+
+<PageTitle>Pokemon Draft</PageTitle>
+
+<h1>Draft</h1>
+
+<p>This component is for creating or joining a lobby.</p>
+
+<div>
+    List of open Lobbies:
+    <div>
+        <table class="table-bordered">
+            <thead>
+                <td>Lobby Name</td>
+                <td>Draft Type</td>
+                <td>Participants</td>
+            </thead>
+            @foreach (var lobby in LobbyUserHandlerService.LobbyUsersMap.Values)
+            {
+                <tr>
+                    <td>@lobby.Session.SessionName</td>
+                    <td>@lobby.Session.SessionType</td>
+                    <td>
+                        @foreach (var user in lobby.UsersDict.Values)
+                        {
+                            @user.Username
+                        }
+                    </td>
+                    <td><button @onclick="() => OnJoinSession(lobby.Session.SessionId)">Join</button></td>
+                </tr>
+            }
+        </table>
+    </div>
+</div>
+<div>
+    <div>
+        <EditForm Model="@Session" OnValidSubmit="OnSubmitCreateSession" FormName="SessionForm">
+            <DataAnnotationsValidator/>
+            <div>
+                <label>Lobby Name</label>
+                <InputText @bind-Value="Session.SessionName" placeholder="Draft Lobby" />
+            </div>
+            <div>
+                <InputRadioGroup @bind-Value="Session.SessionType">
+                    <label>Choose your Draft-Type:</label>
+                    <div>
+                        <InputRadio Value="LobbyType.Default" /><label>Default</label>
+                    </div>
+                    <div>
+                        <InputRadio Value="LobbyType.Auction" /><label>Auction</label>
+                    </div>
+                </InputRadioGroup>
+            </div>
+            <div>
+                <span>@errorMessage</span>
+            </div>
+            <div>
+                <button type="submit">Create</button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+
+@code {
+
+    [SupplyParameterFromForm]
+    SessionModel Session { get; set; } = new()
+    {
+        // setting default session type
+        SessionType = LobbyType.Default
+    };
+
+    private string? errorMessage;
+    private CircuitHandlerService? _circuitHandlerService;
+
+    protected override Task OnInitializedAsync()
+    {
+        _circuitHandlerService = (CircuitHandlerService)CircuitHandler;
+        return Task.CompletedTask;
+    }
+
+    private async Task OnSubmitCreateSession()
+    {
+        if (_circuitHandlerService == null)
+        {
+            throw new NullReferenceException("CircuitHandlerService was not initialized in CreateLobby.razor");
+        }
+
+        int sessionId = await LobbyUserHandlerService.CreateLobby(Session.SessionName, Session.SessionType, _circuitHandlerService.Username);
+        NavigationManager.NavigateTo($"/draft/managelobby/{sessionId}");
+    }
+
+    private async Task OnJoinSession(int sessionId)
+    {
+        if (_circuitHandlerService == null)
+        {
+            throw new NullReferenceException("CircuitHandlerService was not initialized in CreateLobby.razor");
+        }
+        await LobbyUserHandlerService.Join(sessionId, _circuitHandlerService.Username);
+        NavigationManager.NavigateTo($"/draft/managelobby/{sessionId}");
+    }
+
+}

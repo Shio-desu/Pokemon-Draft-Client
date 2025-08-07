@@ -1,0 +1,37 @@
+﻿@page "/draft/drafting/{LobbyIdParam}"
+@using DataAccessLibrary.Interfaces
+@using Pokemon_Draft_Client.Services.Circuits
+@inject IPickData PickData
+@inject IParticipationData ParticipationData
+@inject CircuitHandler CircuitHandler
+@inject NavigationManager NavigationManager
+@attribute [Authorize(Roles= "Administrator,User")]
+
+<h3>Drafting</h3>
+
+@code {
+    [Parameter]
+    public required string LobbyIdParam { get; set; }
+
+    private int _lobbyId;
+    private CircuitHandlerService _circuitHandlerService;
+
+    protected override Task OnInitializedAsync()
+    {
+        try
+        {
+            _lobbyId = Int32.Parse(LobbyIdParam);
+            _circuitHandlerService = (CircuitHandlerService)CircuitHandler;
+        }
+        catch (Exception)
+        {
+            NavigationManager.NavigateTo("/draft/createlobby");
+            throw;
+        }
+
+        
+        
+        return Task.CompletedTask;
+    }
+
+}

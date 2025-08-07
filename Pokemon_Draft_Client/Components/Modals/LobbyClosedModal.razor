@@ -1,0 +1,12 @@
+﻿<h4>The Lobby was closed or you were kicked.</h4>
+<button @onclick="Close">Close</button>
+
+@code {
+
+    [CascadingParameter] BlazoredModalInstance BlazoredModal { get; set; } = default!;
+    
+    private async Task Close()
+    {
+        await BlazoredModal.CloseAsync();
+    }
+}

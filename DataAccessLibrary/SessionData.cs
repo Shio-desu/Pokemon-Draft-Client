@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using DataAccessLibrary.Interfaces;
@@ -5,33 +6,82 @@ using DataAccessLibrary.Models;
 
 namespace DataAccessLibrary
 {
-    public class SessionData : ISessionData
+    public class SessionData(ISqlDataAccess db) : ISessionData
     {
-        private readonly ISqlDataAccess _db;
-        
         // declaring the names of the columns
+        private readonly string _sessionIdColumnString = "session_id";
         private readonly string _startDateColumnString = "start_date";
         private readonly string _endDateColumnString = "end_date";
         private readonly string _sessionNameColumnString = "session_name";
         private readonly string _sessionTypeColumnString = "session_type";
         private readonly string _hasStartedColumnString = "has_started";
-        
-        public SessionData(ISqlDataAccess db)
-        {
-            _db = db;
-        }
 
         public Task<List<SessionModel>> GetSessions()
         {
-            string sql = "select * from sessions";
-            return _db.LoadData<SessionModel, dynamic>(sql, new { });
+            string sql = $"select {_sessionIdColumnString} as SessionId," +
+                         $"{_startDateColumnString} as StartDate," +
+                         $"{_endDateColumnString} as EndDate," +
+                         $"{_sessionNameColumnString} as SessionName," +
+                         $"{_sessionTypeColumnString} as SessionType," +
+                         $"{_hasStartedColumnString} as hasStarted from sessions;";
+            return db.LoadData<SessionModel, dynamic>(sql, new { });
         }
 
-        public Task PostSession(SessionModel session)
+        public Task<List<SessionModel>> GetSessionById(int sessionId)
+        {
+            string sql = $"select {_sessionIdColumnString} as SessionId," +
+                         $"{_startDateColumnString} as StartDate," +
+                         $"{_endDateColumnString} as EndDate," +
+                         $"{_sessionNameColumnString} as SessionName," +
+                         $"{_sessionTypeColumnString} as SessionType," +
+                         $"{_hasStartedColumnString} as hasStarted from sessions " +
+                         $"where session_id = {sessionId};";
+            return db.LoadData<SessionModel, dynamic>(sql, new { });
+        }
+
+        public Task<SessionModel> PostSession(SessionModel session)
         {
             string sql = $"insert into sessions ({_startDateColumnString}, {_endDateColumnString}, {_sessionNameColumnString}, {_sessionTypeColumnString}, {_hasStartedColumnString}) " +
-                         "values (@StartDate, @EndDate, @SessionName, @SessionType, @HasStarted);";
-            return _db.SaveData(sql, session);
+                         "values (@StartDate, @EndDate, @SessionName, @SessionType, @HasStarted) " +
+                         $"returning {_sessionIdColumnString} as SessionId," +
+                         $"{_startDateColumnString} as StartDate," +
+                         $"{_endDateColumnString} as EndDate," +
+                         $"{_sessionNameColumnString} as SessionName," +
+                         $"{_sessionTypeColumnString} as SessionType," +
+                         $"{_hasStartedColumnString} as hasStarted;";
+            return db.SaveDataReturnObject(sql, session);
+        }
+
+        public Task<SessionModel> UpdateSession(SessionModel session)
+        {
+            string sql = $"update sessions " +
+                         $"set {_startDateColumnString} = @StartDate, " +
+                         $"{_endDateColumnString} = @EndDate, " +
+                         $"{_sessionNameColumnString} = @SessionName, " +
+                         $"{_sessionTypeColumnString} = @SessionType, " +
+                         $"{_hasStartedColumnString} = @HasStarted " +
+                         $"where {_sessionIdColumnString} = @SessionId " +
+                         $"returning {_sessionIdColumnString} as SessionId," +
+                         $"{_startDateColumnString} as StartDate," +
+                         $"{_endDateColumnString} as EndDate," +
+                         $"{_sessionNameColumnString} as SessionName," +
+                         $"{_sessionTypeColumnString} as SessionType," +
+                         $"{_hasStartedColumnString} as hasStarted;";
+            return db.SaveDataReturnObject(sql, session);
+        }
+        
+        public Task<int> PostSessionReturnId(SessionModel session)
+        {
+            string sql = $"insert into sessions ({_startDateColumnString}, {_endDateColumnString}, {_sessionNameColumnString}, {_sessionTypeColumnString}, {_hasStartedColumnString}) " +
+                         "values (@StartDate, @EndDate, @SessionName, @SessionType, @HasStarted) " +
+                         $"returning {_sessionIdColumnString} as SessionId;";
+            return db.SaveDataReturnId(sql, session);
+        }
+        
+        public Task DeleteSession(SessionModel session)
+        {
+            string sql = $"delete from sessions where {_sessionIdColumnString} = @SessionId;";
+            return db.SaveData(sql, session);
         }
     }
 }

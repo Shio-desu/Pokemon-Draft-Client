@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pokemon-Draft-Client", "Pokemon-Draft-Client\Pokemon-Draft-Client.csproj", "{30AD35DD-DCAC-4E39-8AF8-E3C4C2CA7CDB}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Pokemon_Draft_Client", "Pokemon_Draft_Client\Pokemon_Draft_Client.csproj", "{30AD35DD-DCAC-4E39-8AF8-E3C4C2CA7CDB}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DataAccessLibrary", "DataAccessLibrary\DataAccessLibrary.csproj", "{3A4B1815-D741-4A1E-88DE-128005DBE7FC}"
 EndProject

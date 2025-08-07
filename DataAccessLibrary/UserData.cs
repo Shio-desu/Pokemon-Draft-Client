@@ -5,30 +5,61 @@ using DataAccessLibrary.Models;
 
 namespace DataAccessLibrary
 {
-    public class UserData : IUserData
+    public class UserData(ISqlDataAccess db) : IUserData
     {
-        private readonly ISqlDataAccess _db;
-        
         // declaring the names of the columns
+        private readonly string _userIdColumnString = "user_id";
         private readonly string _usernameColumnString = "username";
         private readonly string _passhashColumnString = "passhash";
         private readonly string _saltColumnString = "salt";
-        public UserData(ISqlDataAccess db)
-        {
-            _db = db;
-        }
+        private readonly string _isAdminColumnString = "is_admin";
 
         public Task<List<UserModel>> GetUsers()
         {
-            string sql = "select * from users";
-            return _db.LoadData<UserModel, dynamic>(sql, new { });
+            string sql = $"select {_userIdColumnString} as UserId," +
+                         $" {_usernameColumnString} as Username," +
+                         $" {_passhashColumnString} as Passhash," +
+                         $" {_saltColumnString} as Salt," +
+                         $" {_isAdminColumnString} as isAdmin from users;";
+            return db.LoadData<UserModel, dynamic>(sql, new { });
         }
 
-        public Task PostUser(UserModel user)
+        public Task<List<UserModel>> GetUserByName(string username)
         {
-            string sql = $"insert into users ({_usernameColumnString}, {_passhashColumnString}, {_saltColumnString}) " +
-                         "values (@Username, @Passhash, @Salt);";
-            return _db.SaveData(sql, user);
+            string sql = $"select {_userIdColumnString} as UserId," +
+                         $" {_usernameColumnString} as Username," +
+                         $" {_passhashColumnString} as Passhash," +
+                         $" {_saltColumnString} as Salt," +
+                         $" {_isAdminColumnString} as isAdmin from users" +
+                         $" where username = '{username}';";
+            return db.LoadData<UserModel, dynamic>(sql, new { });
+        }
+        
+        public Task<UserModel> PostUser(UserModel user)
+        {
+            string sql =
+                $"insert into users ({_usernameColumnString}, {_passhashColumnString}, {_saltColumnString}, {_isAdminColumnString}) " +
+                "values (@Username, @Passhash, @Salt, @IsAdmin)" +
+                $" returning {_userIdColumnString} as UserId," +
+                $" {_usernameColumnString} as Username," +
+                $" {_passhashColumnString} as Passhash," +
+                $" {_saltColumnString} as Salt," +
+                $" {_isAdminColumnString} as isAdmin;";
+            return db.SaveDataReturnObject(sql, user);
+        }
+
+        public Task<int> PostUserReturnId(UserModel user)
+        {
+            string sql = $"insert into users ({_usernameColumnString}, {_passhashColumnString}, {_saltColumnString}, {_isAdminColumnString}) " +
+                         "values (@Username, @Passhash, @Salt, @IsAdmin) " +
+                         $"returning {_userIdColumnString} as UserId;";
+            return db.SaveDataReturnId(sql, user);
+        }
+        
+        public Task DeleteUser(UserModel user)
+        {
+            string sql = $"delete from users where {_userIdColumnString} = @UserId;";
+            return db.SaveData(sql, user);
         }
     }
 }

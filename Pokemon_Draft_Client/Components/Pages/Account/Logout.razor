@@ -1,0 +1,21 @@
+﻿@page "/account/logout"
+@using Microsoft.AspNetCore.Authentication
+@using Pokemon_Draft_Client.Services.Authentication.Interfaces
+@using Pokemon_Draft_Client.Services.Circuits
+@inject NavigationManager NavigationManager
+@inject ILoginService LoginService
+
+<h3>Successful Logout</h3>
+<h4>You've successfully logged out.</h4>
+
+@code {
+   // TODO: Login ist von hier aus nicht mehr anklickbar bis man die seite wechselt, probably wegen den notwendigen Static Renderer
+    // TODO: beim logout session participation handlen
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        await LoginService.Logout();
+    }
+
+}

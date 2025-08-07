@@ -1,11 +1,10 @@
 ﻿@page "/account/login"
-@using System.Security.Claims
-@using DataAccessLibrary
-@using Microsoft.AspNetCore.Authentication
-@using Microsoft.AspNetCore.Authentication.Cookies
+@using Pokemon_Draft_Client.Models.ViewModels
+@using Pokemon_Draft_Client.Services.Circuits
+@using IAuthenticationService = Pokemon_Draft_Client.Services.Authentication.Interfaces.ILoginService
 @using Pokemon
 @inject NavigationManager NavigationManager
-@inject IUserData UserData
+@inject IAuthenticationService LoginService
 
 <PageTitle>Login</PageTitle>
 
@@ -28,7 +27,7 @@
                 <ValidationMessage For="() => LoginView.Password" />
             </div>
             <div>
-                <span>@errorMessage</span>
+                <span>@_errorMessage</span>
             </div>
             <div>
                 <button type="submit">Login</button>
@@ -41,13 +40,11 @@
 </div>
 
 @code {
-    [CascadingParameter]
-    public required HttpContext HttpContext { get; set; }
-    
+  
     [SupplyParameterFromForm]
     public LoginViewModel LoginView { get; set; } = new();
 
-    private string? errorMessage;
+    private string? _errorMessage;
     
     protected override Task OnInitializedAsync()
     {
@@ -56,39 +53,15 @@
     
     private async Task OnSubmitLogin()
     {
-        if (LoginView.Username == null)
+        var result = await LoginService.Authenticate(LoginView.Username, LoginView.Password);
+
+        if (result.LoginSuccessful)
         {
-            errorMessage = "Please enter a Username.";
-            return;
+            NavigationManager.NavigateTo("/");
         }
-
-        var allUsers = await UserData.GetUsers();
-        var userAccount = allUsers.FirstOrDefault(user => user.Username == LoginView.Username);
-
-        if (userAccount is null)
+        else
         {
-            errorMessage = "No Account found with this Username.";
-            return;
+            _errorMessage = result.ErrorMessage;
         }
-
-        bool verify = BCrypt.Net.BCrypt.Verify(LoginView.Password, userAccount.Passhash);
-
-        if (!verify)
-        {
-            errorMessage = "Invalid Password.";
-            return;
-        }
-        
-        var claims = new List<Claim>()
-        {
-            new Claim(ClaimTypes.Name, userAccount.Username),
-            new Claim(ClaimTypes.Role, "Administrator")
-        };
-
-        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-        var principal = new ClaimsPrincipal(identity);
-        await HttpContext.SignInAsync(principal);
-        NavigationManager.NavigateTo("/");
-        
     }
 }

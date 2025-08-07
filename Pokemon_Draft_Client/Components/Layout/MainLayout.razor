@@ -1,4 +1,6 @@
-﻿@inherits LayoutComponentBase
+﻿@using Pokemon_Draft_Client.Services.Circuits
+@inherits LayoutComponentBase
+@inject CircuitHandler CircuitHandler
 
 <div class="page">
     <div class="sidebar">
@@ -15,7 +17,13 @@
                 </NotAuthorized>
                 <Authorized>
                     <NavLink href="account/logout">
-                        <a>logout</a>
+                        <a>
+                            logout
+                            @if (_circuitHandlerService != null)
+                            {
+                                @_circuitHandlerService.Username
+                            }
+                        </a>
                     </NavLink>
                 </Authorized>
             </AuthorizeView>
@@ -32,3 +40,14 @@
     <a href="." class="reload">Reload</a>
     <span class="dismiss">🗙</span>
 </div>
+
+@code
+{
+    private CircuitHandlerService? _circuitHandlerService;
+
+    protected override Task OnInitializedAsync()
+    {
+        _circuitHandlerService  = (CircuitHandlerService)CircuitHandler;
+        return base.OnInitializedAsync();
+    }
+}
