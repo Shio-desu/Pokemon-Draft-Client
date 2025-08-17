@@ -2,6 +2,7 @@
 @using DataAccessLibrary.Interfaces
 @using Pokemon_Draft_Client.Services.Circuits
 @using Microsoft.AspNetCore.Authorization
+@using Pokemon_Draft_Client.Services.Circuits.Interfaces
 @attribute [Authorize(Roles= "Administrator,User")]
 @inject ILobbyUserHandlerService LobbyUserHandlerService
 @inject CircuitHandler CircuitHandler

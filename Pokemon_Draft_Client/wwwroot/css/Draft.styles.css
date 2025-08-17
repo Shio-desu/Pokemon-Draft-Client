@@ -1,0 +1,24 @@
+﻿.float-div {
+    float: left;
+}
+
+.div-spacing {
+    margin-right: 1em;
+    margin-bottom: 1em;
+}
+
+button {
+    margin: 0.2em;
+}
+
+#StartDraftBtn:enabled {
+    background-color: #6dcf84;
+}
+
+#LeaveBtn {
+    background-color: #cf6d72;
+}
+
+.clear {
+    clear: both;
+}

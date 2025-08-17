@@ -3,6 +3,7 @@
 @using Pokemon_Draft_Client.Components.Modals
 @using Pokemon_Draft_Client.Models
 @using Pokemon_Draft_Client.Services.Circuits
+@using Pokemon_Draft_Client.Services.Circuits.Interfaces
 @attribute [Authorize(Roles= "Administrator,User")]
 @inject ILobbyUserHandlerService LobbyUserHandlerService
 @inject NavigationManager NavigationManager
@@ -17,8 +18,7 @@
 <p>This component is for creating or joining a lobby.</p>
 
 <div>
-    List of open Lobbies:
-    <div>
+    <div class="float-div div-spacing">
         <table class="table-bordered">
             <thead>
             <td>User</td>
@@ -42,26 +42,50 @@
                 }
             }
         </table>
+        <div>
+            <button id="UserReadyBtn" @onclick="ChangeReadyState">
+                @if (_user is { IsReady: true })
+                {
+                    <span>Unready</span>
+                }
+                else
+                {
+                    <span>Ready</span>
+                }
+            </button>
+
+            @if (_lobbyUsers is not null && _user is { IsOwner: true }) {
+                <button id="StartDraftBtn" @onclick="StartDraft" disabled="@_lobbyUsers?.UsersDict.Values.ToList().Exists(user => user.IsReady == false)">
+                    Start!
+                </button>
+            }
+
+            @if (_lobbyUsers is not null) {
+                <button id="LeaveBtn" @onclick="LeaveLobby">
+                    Leave
+                </button>
+            }
+        </div>
+    </div>
+    <div class="float-div div-spacing">
+        @if (_lobbyUsers is not null)
+        {
+            <table class="table-bordered">
+                <thead><td>Pick Order</td></thead>
+                @foreach (var user in _lobbyUsers.PickOrder)
+                {
+                    <tr><td>@user</td></tr>
+                }
+            </table>
+            
+            @if (_user is { IsOwner: true }) {
+                <button id="RandomizePickOrderBtn" @onclick="RandomizePickOrder">
+                    Shuffle
+                </button>
+            }
+        }
     </div>
 </div>
-
-<button @onclick="ChangeReadyState">
-    @if (_user is { IsReady: true })
-    {
-        <span>Unready</span>
-    }
-    else
-    {
-        <span>Ready</span>
-    }
-</button>
-
-@if (_lobbyUsers is not null && _lobbyUsers.UsersDict[_username].IsOwner) {
-<button id="StartDraftBtn" @onclick="StartDraft" disabled="@_lobbyUsers?.UsersDict.Values.ToList().Exists(user => user.IsReady == false)">
-    Start!
-</button>
-}
-
 @code {
     [Parameter]
     public required string LobbyIdParam { get; set; }
@@ -128,6 +152,11 @@
         NavigationManager.NavigateTo("/draft/createlobby");
     }
 
+    private void LeaveLobby()
+    {
+        LobbyUserHandlerService.Leave(_lobbyId, _username);
+    }
+    
     private void KickUser(string username)
     {
         LobbyUserHandlerService.Leave(_lobbyId, username);
@@ -151,5 +180,10 @@
 
         await LobbyUserHandlerService.Start(_lobbyId);
         NavigationManager.NavigateTo($"/draft/drafting/{_lobbyId}");
+    }
+
+    private void RandomizePickOrder()
+    {
+        _lobbyUsers?.RandomizePickOrder();
     }
 }

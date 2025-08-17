@@ -1,5 +1,4 @@
-﻿using DataAccessLibrary;
-using DataAccessLibrary.Interfaces;
+﻿using DataAccessLibrary.Interfaces;
 using DataAccessLibrary.Models;
 using Pokemon_Draft_Client.Models;
 using Pokemon_Draft_Client.Services.Circuits.Interfaces;
@@ -14,6 +13,9 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
 
     private const int AmountOfReconnectTries = 10;
     private const int ReconnectPollingTimerMSeconds = 1 * 1000;
+    private const bool IsOwner = true;
+    private const bool IsNotOwner = false;
+    
     private readonly ISessionData _sessionData;
     private readonly IParticipationData _participationData;
     private readonly IUserData _userData;
@@ -52,20 +54,12 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
             UserId = userId
         };
         await _participationData.PostParticipation(newParticipation);
-
-        var creator = new User
-        {
-            Username = username,
-            IsConnected = true,
-            IsOwner = true,
-            IsReady = false
-        };
         
         LobbyUsersMap[session.SessionId] = new LobbyUsers
         {
-            Session = session,
-            UsersDict = {[username] = creator}
+            Session = session
         };
+        LobbyUsersMap[session.SessionId].AddUser(username, IsOwner);
         
         OnLobbyUsersChanged(session.SessionId);
         return session.SessionId;
@@ -81,7 +75,7 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
         if (userId == -1)
             throw new Exception("User not found in database");
         
-        if (LobbyUsersMap.TryGetValue(lobbyId, out var value))
+        if (LobbyUsersMap.TryGetValue(lobbyId, out var lobbyUsers))
         {
             if (LobbyUsersMap[lobbyId].UsersDict.ContainsKey(username)) 
                 return;
@@ -91,23 +85,18 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
                 SessionId = lobbyId,
                 UserId = userId
             };
-            
             await _participationData.PostParticipation(newParticipation);
             
-            var user = new User
-            {
-                Username = username,
-                IsConnected = true,
-                IsOwner = false,
-                IsReady = false
-            };
-            value.UsersDict[username] = user;
+            lobbyUsers.AddUser(username, IsNotOwner);
             OnLobbyUsersChanged(lobbyId);
         }
     }
 
     public async Task Leave(int lobbyId, string username)
     {
+        // users won't be able to leave a draft-lobby if it has started, they can always reconnect
+        if (LobbyUsersMap[lobbyId].Session.HasStarted) return;
+        
         if (!LobbyUsersMap.ContainsKey(lobbyId)) 
             return;
         
@@ -122,7 +111,7 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
                 if (userId == -1)
                     throw new Exception("User not found in database");
                 
-                LobbyUsersMap[lobbyId].UsersDict.TryRemove(user.Username, out _);
+                LobbyUsersMap[lobbyId].RemoveUser(username);
                 ParticipationModel participationToDelete = new()
                 {
                     SessionId = lobbyId,
@@ -136,8 +125,8 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
             var userId = allUsers.Find(user => user.Username == username)?.UserId ?? -1;
             if (userId == -1)
                 throw new Exception("User not found in database");
-            
-            LobbyUsersMap[lobbyId].UsersDict.TryRemove(username, out _);
+
+            LobbyUsersMap[lobbyId].RemoveUser(username);
             ParticipationModel participationToDelete = new()
             {
                 SessionId = lobbyId,
@@ -176,6 +165,20 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
         OnLobbyUsersChanged(lobbyId);
     }
 
+    public async Task End(int lobbyId)
+    {
+        var sessionList = await _sessionData.GetSessionById(lobbyId);
+        if (sessionList.Count == 0)
+            throw new Exception("Session you wanted to start doesn't exist the the Database.");
+
+        var session = sessionList[0];
+        session.HasStarted = true;
+        session.EndDate = DateTime.UtcNow;
+        await _sessionData.UpdateSession(session);
+        LobbyUsersMap[lobbyId].Session = session;
+        OnLobbyUsersChanged(lobbyId);
+    }
+    
     public void ChangeReadyStateOfUser(int lobbyId, string username)
     {
         LobbyUsersMap.TryGetValue(lobbyId, out var lobbyUsers);
@@ -189,6 +192,9 @@ public class LobbyUserHandlerService : ILobbyUserHandlerService
     // waits for the user to reconnect before removing from the lobby
     private async Task RemoveUserAfterDelay(string username, int lobbyId)
     {
+        // users won't be able to leave a draft-lobby if it has started, they can always reconnect
+        if (LobbyUsersMap[lobbyId].Session.HasStarted) return;
+        
         LobbyUsersMap[lobbyId].UsersDict[username].IsConnected = false;
         LobbyUsersMap[lobbyId].UsersDict[username].IsReady = false;
         OnLobbyUsersChanged(lobbyId);

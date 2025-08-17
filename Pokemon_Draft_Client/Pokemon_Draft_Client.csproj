@@ -9,6 +9,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <None Include="wwwroot\css\Draft.styles.css" />
+      <None Include="wwwroot\css\Pokemon_Draft_Client.styles.css" />
       <None Include="wwwroot\images\avatar.png" />
     </ItemGroup>
 

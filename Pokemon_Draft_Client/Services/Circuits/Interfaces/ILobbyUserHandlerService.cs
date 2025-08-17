@@ -1,7 +1,7 @@
 ﻿using DataAccessLibrary.Models;
 using Pokemon_Draft_Client.Models;
 
-namespace Pokemon_Draft_Client.Services.Circuits;
+namespace Pokemon_Draft_Client.Services.Circuits.Interfaces;
 
 public interface ILobbyUserHandlerService
 {
@@ -11,5 +11,6 @@ public interface ILobbyUserHandlerService
     Task Join(int lobbyId, string username);
     Task Leave(int lobbyId, string username);
     Task Start(int lobbyId);
+    Task End(int lobbyId);
     void ChangeReadyStateOfUser(int lobbyId, string username);
 }

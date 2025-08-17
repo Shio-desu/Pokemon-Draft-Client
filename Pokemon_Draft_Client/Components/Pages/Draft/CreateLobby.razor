@@ -4,6 +4,7 @@
 @using DataAccessLibrary.Models
 @using Microsoft.AspNetCore.Authorization
 @using Pokemon_Draft_Client.Services.Circuits
+@using Pokemon_Draft_Client.Services.Circuits.Interfaces
 @rendermode InteractiveServer
 @attribute [Authorize(Roles= "Administrator,User")]
 @inject ILobbyUserHandlerService LobbyUserHandlerService
@@ -21,9 +22,9 @@
     <div>
         <table class="table-bordered">
             <thead>
-                <td>Lobby Name</td>
-                <td>Draft Type</td>
-                <td>Participants</td>
+            <td>Lobby Name</td>
+            <td>Draft Type</td>
+            <td>Participants</td>
             </thead>
             @foreach (var lobby in LobbyUserHandlerService.LobbyUsersMap.Values)
             {
@@ -42,6 +43,7 @@
         </table>
     </div>
 </div>
+
 <div>
     <div>
         <EditForm Model="@Session" OnValidSubmit="OnSubmitCreateSession" FormName="SessionForm">
